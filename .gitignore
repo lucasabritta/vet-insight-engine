@@ -46,7 +46,6 @@ yarn-error.log*
 .docker-volumes/
 
 # --- IDEs ---
-.vscode/
 .idea/
 *copilot-instructions.md
 *agents/
