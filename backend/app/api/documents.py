@@ -5,6 +5,7 @@ from app.services import document_service
 
 
 router = APIRouter()
+router_prefix = "/documents"
 
 
 @router.post("/upload")

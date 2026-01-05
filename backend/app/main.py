@@ -5,8 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.health import router as health_router
-from app.api.documents import router as documents_router
+import importlib
+import pkgutil
+import app.api as api_package
 
 
 @asynccontextmanager
@@ -34,8 +35,17 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(health_router)
-    app.include_router(documents_router, prefix="/documents")
+    # Auto-discover and include routers from the `app.api` package.
+    for finder, name, ispkg in pkgutil.iter_modules(api_package.__path__):
+        module = importlib.import_module(f"{api_package.__name__}.{name}")
+        router = getattr(module, "router", None)
+        if not router:
+            continue
+        prefix = getattr(module, "router_prefix", None)
+        if prefix:
+            app.include_router(router, prefix=prefix)
+        else:
+            app.include_router(router)
 
     return app
 
