@@ -12,12 +12,10 @@ from app.core.config import settings
 router = APIRouter()
 
 
-
 def _ensure_upload_dir() -> Path:
     path = Path(settings.upload_dir)
     path.mkdir(parents=True, exist_ok=True)
     return path
-
 
 
 @router.post("/upload")
@@ -73,7 +71,6 @@ async def upload_document(file: UploadFile = File(...)) -> dict:
     return {"id": doc_id, "filename": file.filename}
 
 
-
 @router.get("/{doc_id}")
 def get_document(doc_id: str) -> dict:
     upload_dir = Path(settings.upload_dir)
@@ -85,7 +82,6 @@ def get_document(doc_id: str) -> dict:
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to read metadata")
     return data
-
 
 
 @router.get("/{doc_id}/file")
