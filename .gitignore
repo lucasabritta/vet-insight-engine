@@ -1,9 +1,10 @@
 # --- System Files ---
 .DS_Store
 Thumbs.db
+*.log
 
 # --- Environment & Secrets ---
-.env
+.env*
 .env.local
 .env.*.local
 *.pem
@@ -22,6 +23,9 @@ dist/
 *.egg-info/
 .mypy_cache/
 .ruff_cache/
+coverage/
+htmlcov/
+.coverage
 
 # --- Node / Frontend ---
 node_modules/
@@ -34,6 +38,7 @@ yarn-error.log*
 
 # --- Databases & Volumes ---
 /pgdata/
+/data/
 *.db
 *.sqlite3
 
@@ -48,3 +53,7 @@ yarn-error.log*
 *.cursorrules
 *.swp
 *.swo
+
+# --- Generated ---
+/backend/uploads/
+*.pyc
