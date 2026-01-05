@@ -1,0 +1,6 @@
+include:
+  - backend/docker-compose.yml
+  - frontend/docker-compose.yml
+
+networks:
+  vet-insight-network:
