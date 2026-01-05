@@ -1,9 +1,15 @@
 import os
+import pytesseract
 from app.services.extraction.image import ImageExtractor
 
-def test_image_extraction_sample():
+def test_image_extraction_sample(monkeypatch):
     sample = os.path.join(os.path.dirname(__file__), '../../data/samples/sample.png')
+
+    # Avoid requiring the Tesseract binary in CI by mocking pytesseract's
+    # image_to_string function. This keeps unit tests fast and hermetic.
+    monkeypatch.setattr(pytesseract, 'image_to_string', lambda img: 'Hello PNG OCR')
+
     extractor = ImageExtractor()
     result = extractor.extract(sample)
-    assert result.text.strip() != ''
+    assert result.text.strip() == 'Hello PNG OCR'
     assert 'size' in result.meta
