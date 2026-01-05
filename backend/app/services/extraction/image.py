@@ -1,7 +1,7 @@
 from .base import DocumentExtractor, ExtractionResult
-from typing import Any
 import pytesseract
 from PIL import Image
+
 
 class ImageExtractor(DocumentExtractor):
     def extract(self, file_path: str) -> ExtractionResult:

@@ -1,6 +1,7 @@
 from .base import DocumentExtractor, ExtractionResult
 import fitz  # PyMuPDF
 
+
 class PDFExtractor(DocumentExtractor):
     def extract(self, file_path: str) -> ExtractionResult:
         doc = fitz.open(file_path)

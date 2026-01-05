@@ -1,4 +1,5 @@
 """Document sample file upload integration tests."""
+
 import mimetypes
 from pathlib import Path
 

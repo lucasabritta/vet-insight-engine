@@ -4,13 +4,14 @@ from .image import ImageExtractor
 from .base import DocumentExtractor
 from typing import Type
 
-MIME_MAP = {
+MIME_MAP: dict[str, Type[DocumentExtractor]] = {
     "application/pdf": PDFExtractor,
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": DocxExtractor,
     "image/png": ImageExtractor,
     "image/jpeg": ImageExtractor,
     "image/jpg": ImageExtractor,
 }
+
 
 def get_extractor(mime_type: str) -> DocumentExtractor:
     extractor_cls = MIME_MAP.get(mime_type)

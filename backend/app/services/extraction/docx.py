@@ -1,6 +1,7 @@
 from .base import DocumentExtractor, ExtractionResult
 import docx
 
+
 class DocxExtractor(DocumentExtractor):
     def extract(self, file_path: str) -> ExtractionResult:
         doc = docx.Document(file_path)
