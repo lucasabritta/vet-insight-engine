@@ -1,3 +1,4 @@
+"""Document sample file upload integration tests."""
 import mimetypes
 from pathlib import Path
 from fastapi.testclient import TestClient
@@ -11,7 +12,8 @@ client = TestClient(app)
 
 
 def test_upload_samples(tmp_path):
-    repo_root = Path(__file__).resolve().parents[2]
+    """Test uploading all sample files from data/samples directory."""
+    repo_root = Path(__file__).resolve().parents[3]
     samples_dir = repo_root / "data" / "samples"
     if not samples_dir.exists():
         pytest.skip("No samples directory found")
