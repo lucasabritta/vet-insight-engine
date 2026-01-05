@@ -1,12 +1,12 @@
 """Document sample file upload integration tests."""
 import mimetypes
 from pathlib import Path
-from fastapi.testclient import TestClient
+
 import pytest
+from fastapi.testclient import TestClient
 
-from app.main import app
 from app.core.config import settings
-
+from app.main import app
 
 client = TestClient(app)
 
@@ -29,7 +29,9 @@ def test_upload_samples(tmp_path):
         mtype, _ = mimetypes.guess_type(sample.name)
         mtype = mtype or "application/octet-stream"
         with sample.open("rb") as fp:
-            resp = client.post("/documents/upload", files={"file": (sample.name, fp, mtype)})
+            resp = client.post(
+                "/documents/upload", files={"file": (sample.name, fp, mtype)}
+            )
         assert resp.status_code == 200, f"upload failed for {sample.name}: {resp.text}"
         doc_id = resp.json().get("id")
         assert doc_id
