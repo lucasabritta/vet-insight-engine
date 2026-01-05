@@ -27,14 +27,6 @@ jobs:
           pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio pytest-cov pytest-mock
 
-
-      - name: Verify sample files
-        run: |
-          echo "Using committed sample files under backend/data/samples"
-          ls -la backend/data/samples || true
-          file backend/data/samples/* || true
-
-
       - name: Run unit tests
         run: |
           pytest backend/tests/unit --cov=backend/app --cov-report=term-missing
