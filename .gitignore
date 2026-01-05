@@ -43,6 +43,8 @@ yarn-error.log*
 # --- IDEs ---
 .vscode/
 .idea/
+*copilot-instructions.md
+*agents/
 *.cursorrules
 *.swp
 *.swo
