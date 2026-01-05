@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     upload_dir: str = "/app/uploads"
     max_upload_size_mb: int = 50
+    allowed_mimetypes: list[str] = [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "text/plain",
+        "application/octet-stream",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+    ]
 
 
 settings = Settings()
