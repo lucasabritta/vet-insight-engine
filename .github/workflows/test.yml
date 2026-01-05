@@ -24,7 +24,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e "backend/[dev]"
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov pytest-mock
 
       - name: Run tests
         env:
