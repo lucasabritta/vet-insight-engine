@@ -15,3 +15,7 @@ pytesseract==0.3.13
 Pillow==12.1.0
 reportlab==4.4.7
 pytest==7.4.4
+pytest-cov==4.0.0
+pytest-asyncio==0.21.0
+pytest-mock==3.11.1
+ruff==0.4.6
