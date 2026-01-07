@@ -7,7 +7,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 
-
 @pytest.fixture
 def sample_pdf_path():
     """Path to sample PDF file used in tests."""

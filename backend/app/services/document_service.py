@@ -1,4 +1,3 @@
-
 # noqa: F821
 from __future__ import annotations
 
@@ -7,7 +6,6 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
-
 
 
 from fastapi import HTTPException, UploadFile
@@ -28,7 +26,9 @@ def _ensure_upload_dir() -> Path:
     return path
 
 
-async def save_upload_file(file: UploadFile, db: Session | None = None) -> Dict[str, Any]:
+async def save_upload_file(
+    file: UploadFile, db: Session | None = None
+) -> Dict[str, Any]:
     """Save an uploaded file to disk and return metadata.
 
     Raises HTTPException on validation or write errors.
@@ -116,7 +116,9 @@ def get_file_path_from_meta(doc_id: str, db: Session | None = None) -> Path:
     return path
 
 
-def extract_text_from_document(doc_id: str, db: Session | None = None) -> Dict[str, Any]:
+def extract_text_from_document(
+    doc_id: str, db: Session | None = None
+) -> Dict[str, Any]:
     """Extract raw text from document using appropriate extractor.
 
     Returns dict with 'text' and 'extraction_meta' keys.
@@ -176,7 +178,9 @@ def extract_structured_record_from_text(
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 
-def process_document_full_pipeline(doc_id: str, db: Session | None = None) -> Dict[str, Any]:
+def process_document_full_pipeline(
+    doc_id: str, db: Session | None = None
+) -> Dict[str, Any]:
     """Full pipeline: extract text → structure with LLM.
 
     Returns dict with both raw text and structured record.
@@ -191,7 +195,9 @@ def process_document_full_pipeline(doc_id: str, db: Session | None = None) -> Di
         )
 
     try:
-        structured_result = extract_structured_record_from_text(raw_text, db=db, doc_id=doc_id)
+        structured_result = extract_structured_record_from_text(
+            raw_text, db=db, doc_id=doc_id
+        )
     except HTTPException as e:
         # Preserve upstream HTTP errors (e.g., 422 from LLM failures)
         raise e
@@ -217,8 +223,12 @@ def persist_document_metadata(db: Session, metadata: Dict[str, Any]) -> None:
     existing = db.get(Document, metadata["id"])
     if existing:
         # Update mutable fields if any
-        existing.original_filename = metadata.get("original_filename", existing.original_filename)
-        existing.stored_filename = metadata.get("stored_filename", existing.stored_filename)
+        existing.original_filename = metadata.get(
+            "original_filename", existing.original_filename
+        )
+        existing.stored_filename = metadata.get(
+            "stored_filename", existing.stored_filename
+        )
         existing.content_type = metadata.get("content_type", existing.content_type)
         existing.size = int(metadata.get("size", existing.size or 0))
         existing.path = metadata.get("path", existing.path)
@@ -235,7 +245,9 @@ def persist_document_metadata(db: Session, metadata: Dict[str, Any]) -> None:
     db.commit()
 
 
-def upsert_structured_record(db: Session, doc_id: str, record: Dict[str, Any]) -> Dict[str, Any]:
+def upsert_structured_record(
+    db: Session, doc_id: str, record: Dict[str, Any]
+) -> Dict[str, Any]:
     """Create or update the structured record for a document."""
     doc = db.get(Document, doc_id)
     if not doc:

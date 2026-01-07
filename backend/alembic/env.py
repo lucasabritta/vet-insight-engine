@@ -27,7 +27,9 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     ini_section = config.get_section(config.config_ini_section)
     if "sqlalchemy.url" in ini_section:
-        ini_section["sqlalchemy.url"] = os.environ.get("DATABASE_URL", ini_section["sqlalchemy.url"])
+        ini_section["sqlalchemy.url"] = os.environ.get(
+            "DATABASE_URL", ini_section["sqlalchemy.url"]
+        )
 
     connectable = engine_from_config(
         ini_section,

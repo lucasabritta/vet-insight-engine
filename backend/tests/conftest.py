@@ -1,4 +1,5 @@
 """Pytest configuration for integration tests using py-pglite."""
+
 import pytest
 from fastapi.testclient import TestClient
 

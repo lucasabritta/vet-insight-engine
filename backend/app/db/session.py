@@ -14,7 +14,9 @@ engine = create_engine(
     future=True,
 )
 
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, class_=Session)
+SessionLocal = sessionmaker(
+    bind=engine, autoflush=False, autocommit=False, class_=Session
+)
 
 
 def get_db() -> Iterator[Session]:

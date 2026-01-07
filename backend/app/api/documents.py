@@ -62,5 +62,7 @@ def update_document_record(
         return {"detail": "'record' field required"}
     # Validate against pydantic schema for safety
     record = VeterinaryRecordSchema.model_validate(record_in)
-    updated = document_service.upsert_structured_record(db, doc_id, json.loads(record.model_dump_json()))
+    updated = document_service.upsert_structured_record(
+        db, doc_id, json.loads(record.model_dump_json())
+    )
     return {"id": doc_id, "record": updated}

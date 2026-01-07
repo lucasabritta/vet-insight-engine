@@ -6,8 +6,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from .structured_record import StructuredRecord
+
 
 class Document(Base):
     __tablename__ = "documents"
@@ -18,8 +20,13 @@ class Document(Base):
     content_type: Mapped[str] = mapped_column(String(128), nullable=True)
     size: Mapped[int] = mapped_column(BigInteger, nullable=False)
     path: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), default=datetime.utcnow, nullable=False
+    )
 
     record: Mapped["StructuredRecord | None"] = relationship(
-        "StructuredRecord", back_populates="document", cascade="all, delete-orphan", uselist=False
+        "StructuredRecord",
+        back_populates="document",
+        cascade="all, delete-orphan",
+        uselist=False,
     )

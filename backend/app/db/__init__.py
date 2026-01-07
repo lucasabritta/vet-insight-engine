@@ -1,4 +1,3 @@
-
 """Database package initialization and model auto-import for SQLAlchemy metadata discovery."""
 
 import os

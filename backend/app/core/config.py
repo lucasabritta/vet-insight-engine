@@ -7,7 +7,6 @@ from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
-
 class Settings(BaseSettings):
     """Application settings with test-aware database URL."""
 
@@ -29,6 +28,7 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         import sys
         import os
+
         # Use PGlite for pytest runs (in-memory, no external DB)
         is_pytest = any("pytest" in arg for arg in sys.argv)
         if is_pytest:
