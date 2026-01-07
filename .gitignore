@@ -56,4 +56,4 @@ yarn-error.log*
 # --- Generated ---
 /backend/uploads/
 *.pyc
-uploads
+/uploads/
