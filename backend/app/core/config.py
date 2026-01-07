@@ -29,6 +29,10 @@ class Settings(BaseSettings):
         import sys
         import os
 
+        # Check for explicit DATABASE_URL environment variable first (for CI/production)
+        if os.environ.get("DATABASE_URL"):
+            return os.environ["DATABASE_URL"]
+
         # Use PGlite for pytest runs (in-memory, no external DB)
         is_pytest = any("pytest" in arg for arg in sys.argv)
         if is_pytest:
