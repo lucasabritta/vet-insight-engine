@@ -89,4 +89,4 @@ jobs:
         if: always()
         working-directory: backend
         run: |
-          docker-compose down -v
+          docker compose down -v
