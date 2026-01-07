@@ -1,19 +1,11 @@
 """Integration tests for database persistence of documents and records."""
 
 import io
-import os
 
-import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app
 from app.core.config import settings
 
 
-client = TestClient(app)
-
-
-def test_upload_and_update_record(tmp_path):
+def test_upload_and_update_record(client, tmp_path):
     settings.upload_dir = str(tmp_path)
 
     content = b"db test"

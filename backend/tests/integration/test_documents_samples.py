@@ -4,15 +4,11 @@ import mimetypes
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.main import app
-
-client = TestClient(app)
 
 
-def test_upload_samples(tmp_path):
+def test_upload_samples(client, tmp_path):
     """Test uploading all sample files from data/samples directory."""
     repo_root = Path(__file__).resolve().parents[2]
     samples_dir = repo_root / "data" / "samples"

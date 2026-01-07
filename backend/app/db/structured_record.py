@@ -6,6 +6,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .document import Document
+
 class StructuredRecord(Base):
     __tablename__ = "structured_records"
 

@@ -3,16 +3,11 @@
 import io
 import os
 from pathlib import Path
-from fastapi.testclient import TestClient
 
-from app.main import app
 from app.core.config import settings
 
 
-client = TestClient(app)
-
-
-def test_upload_and_download(tmp_path):
+def test_upload_and_download(client, tmp_path):
     """Test full upload and download workflow."""
     settings.upload_dir = str(tmp_path)
 
@@ -39,7 +34,7 @@ def test_upload_and_download(tmp_path):
     assert dl.content == content
 
 
-def test_upload_empty_file(tmp_path):
+def test_upload_empty_file(client, tmp_path):
     """Test uploading an empty file."""
     settings.upload_dir = str(tmp_path)
     content = b""
@@ -51,7 +46,7 @@ def test_upload_empty_file(tmp_path):
     assert meta["size"] == 0
 
 
-def test_upload_large_file(tmp_path):
+def test_upload_large_file(client, tmp_path):
     """Test uploading a 2 MB file within limits."""
     settings.upload_dir = str(tmp_path)
     content = b"a" * (2 * 1024 * 1024)
@@ -63,7 +58,7 @@ def test_upload_large_file(tmp_path):
     assert meta["size"] == len(content)
 
 
-def test_corrupt_metadata_returns_500(tmp_path):
+def test_corrupt_metadata_returns_500(client, tmp_path):
     """Test retrieving document with corrupted metadata file."""
     settings.upload_dir = str(tmp_path)
     content = b"good"
@@ -85,7 +80,7 @@ def test_corrupt_metadata_returns_500(tmp_path):
         assert "Failed to read metadata" in resp2.text
 
 
-def test_download_missing_file(tmp_path):
+def test_download_missing_file(client, tmp_path):
     """Test downloading when stored file is missing."""
     settings.upload_dir = str(tmp_path)
     content = b"hello"
@@ -104,7 +99,7 @@ def test_download_missing_file(tmp_path):
     assert dl.status_code == 404
 
 
-def test_invalid_mime_rejected(tmp_path):
+def test_invalid_mime_rejected(client, tmp_path):
     """Test rejection of unsupported MIME types."""
     settings.upload_dir = str(tmp_path)
     # set small allowed list to ensure rejection
@@ -117,7 +112,7 @@ def test_invalid_mime_rejected(tmp_path):
     settings.allowed_mimetypes = orig_allowed
 
 
-def test_oversize_rejected(tmp_path):
+def test_oversize_rejected(client, tmp_path):
     """Test rejection of files exceeding size limit."""
     settings.upload_dir = str(tmp_path)
     orig_limit = settings.max_upload_size_mb

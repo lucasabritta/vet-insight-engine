@@ -7,8 +7,9 @@ from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
+
 class Settings(BaseSettings):
-    """Application settings."""
+    """Application settings with test-aware database URL."""
 
     # Load .env when present, but ignore extra environment variables
     model_config = ConfigDict(
@@ -20,7 +21,24 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = True
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
-    database_url: str = "postgresql://user:password@postgres:5432/vet_insight"
+
+    # Default for Docker Compose
+    _default_db_url: str = "postgresql://user:password@postgres:5432/vet_insight"
+
+    @property
+    def database_url(self) -> str:
+        import sys
+        import os
+        # Use PGlite for pytest runs (in-memory, no external DB)
+        is_pytest = any("pytest" in arg for arg in sys.argv)
+        if is_pytest:
+            # PGlite default connection string
+            return "postgresql://postgres:postgres@localhost/test_db"
+        # Fallback to previous logic for non-test runs
+        if os.environ.get("PYTEST_RUNNING_IN_DOCKER") == "1":
+            return "postgresql://user:password@postgres:5432/vet_insight"
+        return self._default_db_url
+
     openai_api_key: str = ""
     # LLM diagnostics and behavior
     llm_debug_logs: bool = True

@@ -5,6 +5,10 @@ from sqlalchemy import BigInteger, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .structured_record import StructuredRecord
+
 class Document(Base):
     __tablename__ = "documents"
 
