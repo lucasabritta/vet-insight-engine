@@ -3,9 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import App from './App'
 
-// Mock fetch globally
+// Mock fetch globally using Vitest's stubGlobal
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+vi.stubGlobal('fetch', mockFetch)
 
 // Mock API functions
 vi.mock('./lib/api', () => ({
