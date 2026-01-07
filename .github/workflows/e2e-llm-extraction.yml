@@ -1,4 +1,4 @@
-name: e2e-llm-extraction
+name: E2E LLM Extraction
 
 on:
   workflow_dispatch:
@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   e2e-llm:
+    name: E2E LLM Extraction Test
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
