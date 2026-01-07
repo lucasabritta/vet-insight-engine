@@ -100,7 +100,14 @@ function App() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-2">Extracted Text</h2>
-            {isExtracting && <div className="text-sm text-gray-500">Extracting…</div>}
+            {isExtracting && (
+              <div className="flex flex-col items-center justify-center bg-white border rounded p-6 h-[70vh]">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+                  <p className="text-sm text-gray-600">Extracting text from document…</p>
+                </div>
+              </div>
+            )}
             {!isExtracting && rawText && (
               <div className="bg-white border rounded p-3 h-[70vh] overflow-auto whitespace-pre-wrap text-sm text-gray-800" aria-label="Extracted text from document" role="region">
                 {rawText}
