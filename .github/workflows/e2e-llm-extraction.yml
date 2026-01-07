@@ -17,37 +17,15 @@ jobs:
     timeout-minutes: 25
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: vet_insight
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build backend image
+      - name: Start services with docker-compose
+        working-directory: backend
         run: |
-          docker build -t vet-insight-backend:ci -f backend/Dockerfile backend
-
-      - name: Start backend
-        run: |
-          docker run -d --name vet-insight-backend-ci \
-            --network host \
-            -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
-            -e DATABASE_URL="postgresql://user:password@localhost:5432/vet_insight" \
-            vet-insight-backend:ci
+          docker-compose up -d --build
 
       - name: Wait for health
         run: |
@@ -109,5 +87,6 @@ jobs:
 
       - name: Cleanup
         if: always()
+        working-directory: backend
         run: |
-          docker rm -f vet-insight-backend-ci || true
+          docker-compose down -v
