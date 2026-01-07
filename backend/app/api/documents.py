@@ -1,7 +1,11 @@
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
+import json
 from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
 
 from app.services import document_service
+from app.db.session import get_db
+from app.schemas.veterinary_record import VeterinaryRecordSchema
 
 
 router = APIRouter()
@@ -9,20 +13,23 @@ router_prefix = "/documents"
 
 
 @router.post("/upload")
-async def upload_document(file: UploadFile = File(...)) -> dict:
-    metadata = await document_service.save_upload_file(file)
+async def upload_document(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+) -> dict:
+    metadata = await document_service.save_upload_file(file, db=db)
     return {"id": metadata["id"], "filename": metadata["original_filename"]}
 
 
 @router.get("/{doc_id}")
-def get_document(doc_id: str) -> dict:
-    return document_service.read_metadata(doc_id)
+def get_document(doc_id: str, db: Session = Depends(get_db)) -> dict:
+    return document_service.read_metadata(doc_id, db=db)
 
 
 @router.get("/{doc_id}/file")
-def download_document(doc_id: str):
-    file_path = document_service.get_file_path_from_meta(doc_id)
-    meta = document_service.read_metadata(doc_id)
+def download_document(doc_id: str, db: Session = Depends(get_db)):
+    file_path = document_service.get_file_path_from_meta(doc_id, db=db)
+    meta = document_service.read_metadata(doc_id, db=db)
     return FileResponse(
         path=str(file_path),
         filename=meta.get("original_filename"),
@@ -31,9 +38,29 @@ def download_document(doc_id: str):
 
 
 @router.post("/{doc_id}/extract")
-def extract_and_structure_document(doc_id: str) -> dict:
+def extract_and_structure_document(doc_id: str, db: Session = Depends(get_db)) -> dict:
     """Full pipeline: extract text and structure with LLM.
 
     Returns raw text and structured veterinary record.
     """
-    return document_service.process_document_full_pipeline(doc_id)
+    return document_service.process_document_full_pipeline(doc_id, db=db)
+
+
+@router.put("/{doc_id}")
+def update_document_record(
+    doc_id: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Update stored structured record for the given document.
+
+    Accepts payload with a 'record' field conforming to VeterinaryRecordSchema.
+    Returns updated record JSON.
+    """
+    record_in = payload.get("record")
+    if not record_in:
+        return {"detail": "'record' field required"}
+    # Validate against pydantic schema for safety
+    record = VeterinaryRecordSchema.model_validate(record_in)
+    updated = document_service.upsert_structured_record(db, doc_id, json.loads(record.model_dump_json()))
+    return {"id": doc_id, "record": updated}

@@ -6,6 +6,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.db.base import Base
+from app.db.session import engine
 import importlib
 import pkgutil
 import app.api as api_package
@@ -15,6 +17,11 @@ import app.api as api_package
 async def lifespan(app: FastAPI):
     """Manage application lifecycle."""
     print(f"Application starting in {settings.environment} mode")
+    # Ensure tables exist (for development environments). In production, use migrations.
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as exc:
+        print(f"DB init error: {exc}")
     yield
     print("Application shutting down")
 
