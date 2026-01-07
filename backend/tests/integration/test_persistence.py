@@ -13,7 +13,6 @@ from app.core.config import settings
 client = TestClient(app)
 
 
-@pytest.mark.integration
 def test_upload_and_update_record(tmp_path):
     settings.upload_dir = str(tmp_path)
 
