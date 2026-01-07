@@ -104,7 +104,9 @@ async def call_openai_with_retry(
         except asyncio.TimeoutError:
             if settings.llm_debug_logs:
                 logger.warning(
-                    "llm.call.timeout attempt=%s of %s", attempt + 1, retry_config.max_retries
+                    "llm.call.timeout attempt=%s of %s",
+                    attempt + 1,
+                    retry_config.max_retries,
                 )
             if attempt < retry_config.max_retries - 1:
                 wait_time = retry_config.backoff_factor * (2**attempt)

@@ -1,4 +1,5 @@
 """Integration tests for document extraction and LLM processing pipeline."""
+
 import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -12,7 +13,12 @@ from app.main import app
 @pytest.fixture
 def sample_pdf_path():
     """Path to sample PDF file used in tests."""
-    return Path(__file__).parent.parent.parent / "data" / "samples" / "clinical_history_1.pdf"
+    return (
+        Path(__file__).parent.parent.parent
+        / "data"
+        / "samples"
+        / "clinical_history_1.pdf"
+    )
 
 
 @pytest.fixture
