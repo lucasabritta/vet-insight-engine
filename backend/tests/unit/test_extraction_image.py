@@ -1,9 +1,12 @@
 import os
+
 from app.services.extraction.image import ImageExtractor
 
 
 def test_image_extraction_uses_ocr_on_sample():
-    sample = os.path.join(os.path.dirname(__file__), "../../data/samples/clinical_history_1_1.png")
+    sample = os.path.join(
+        os.path.dirname(__file__), "../../data/samples/clinical_history_1_1.png"
+    )
     extractor = ImageExtractor()
     result = extractor.extract(sample)
     # Ensure OCR produced some text and metadata was captured
@@ -12,7 +15,9 @@ def test_image_extraction_uses_ocr_on_sample():
 
 
 def test_image_extraction_contains_medical_keywords():
-    sample = os.path.join(os.path.dirname(__file__), "../../data/samples/clinical_history_1_1.png")
+    sample = os.path.join(
+        os.path.dirname(__file__), "../../data/samples/clinical_history_1_1.png"
+    )
     extractor = ImageExtractor()
     result = extractor.extract(sample)
     text = result.text.lower()
@@ -26,4 +31,6 @@ def test_image_extraction_contains_medical_keywords():
         "chip",
         "kivet",
     ]
-    assert any(k in text for k in keywords), f"OCR text did not contain expected keywords: {text[:200]}"
+    assert any(
+        k in text for k in keywords
+    ), f"OCR text did not contain expected keywords: {text[:200]}"

@@ -11,7 +11,10 @@ class Settings(BaseSettings):
     """Application settings."""
 
     # Load .env when present, but ignore extra environment variables
-    model_config = ConfigDict(env_file=".env" if Path(".env").exists() else None, extra="ignore")
+    model_config = ConfigDict(
+        env_file=".env" if Path(".env").exists() else None,
+        extra="ignore",
+    )
 
     app_name: str = "Vet Insight Engine"
     environment: str = "development"
