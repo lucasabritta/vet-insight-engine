@@ -86,9 +86,9 @@ jobs:
           fi
           echo "schema validation passed"
 
-      - name: Show sample output (truncated)
+      - name: Show sample output
         run: |
-          head -c 800 /tmp/extract.json || true
+          cat /tmp/extract.json || true
 
       - name: Cleanup
         if: always()
