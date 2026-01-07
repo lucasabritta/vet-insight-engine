@@ -42,7 +42,9 @@ def download_document(doc_id: str, db: Session = Depends(get_db)) -> FileRespons
 
 
 @router.post("/{doc_id}/extract")
-def extract_and_structure_document(doc_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+def extract_and_structure_document(
+    doc_id: str, db: Session = Depends(get_db)
+) -> dict[str, Any]:
     """Full pipeline: extract text and structure with LLM.
 
     Returns raw text and structured veterinary record.

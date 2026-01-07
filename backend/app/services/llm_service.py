@@ -174,7 +174,8 @@ async def extract_structured_record_async(raw_text: str) -> VeterinaryRecordSche
 
 
 async def _extract_structured_record_impl(raw_text: str) -> VeterinaryRecordSchema:
-    """Implementation of structured record extraction (async)."""    prompt = f"""Extract structured veterinary medical record data from the following text.
+    """Implementation of structured record extraction (async)."""
+    prompt = f"""Extract structured veterinary medical record data from the following text.
 Return a valid JSON object matching this structure:
 {{
   "pet": {{"name": "string", "species": "string", "breed": "string", "age": "string", "weight": "string", "microchip": "string"}},
