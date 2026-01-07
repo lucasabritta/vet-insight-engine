@@ -17,20 +17,15 @@ jobs:
     timeout-minutes: 25
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build backend image
+      - name: Start services with docker-compose
+        working-directory: backend
         run: |
-          docker build -t vet-insight-backend:ci -f backend/Dockerfile backend
-
-      - name: Start backend
-        run: |
-          docker run -d --name vet-insight-backend-ci \
-            -p 8000:8000 \
-            -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
-            vet-insight-backend:ci
+          docker compose up -d --build
 
       - name: Wait for health
         run: |
@@ -92,5 +87,6 @@ jobs:
 
       - name: Cleanup
         if: always()
+        working-directory: backend
         run: |
-          docker rm -f vet-insight-backend-ci || true
+          docker compose down -v

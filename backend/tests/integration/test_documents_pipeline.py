@@ -5,9 +5,6 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app
 
 
 @pytest.fixture
@@ -60,12 +57,6 @@ def sample_llm_response():
         "follow_up": "Recheck in 2 weeks",
         "notes": None,
     }
-
-
-@pytest.fixture
-def client():
-    """FastAPI test client."""
-    return TestClient(app)
 
 
 def test_upload_document_integration(client, sample_pdf_path):

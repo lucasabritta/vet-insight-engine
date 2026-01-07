@@ -1,14 +1,13 @@
 """Application configuration."""
 
 from pathlib import Path
-from typing import List
 
 from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Application settings."""
+    """Application settings with test-aware database URL."""
 
     # Load .env when present, but ignore extra environment variables
     model_config = ConfigDict(
@@ -19,10 +18,9 @@ class Settings(BaseSettings):
     app_name: str = "Vet Insight Engine"
     environment: str = "development"
     debug: bool = True
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
     database_url: str = "postgresql://user:password@postgres:5432/vet_insight"
     openai_api_key: str = ""
-    # LLM diagnostics and behavior
     llm_debug_logs: bool = True
     llm_fallback_on_error: bool = False
     upload_dir: str = "/app/uploads"
