@@ -1,11 +1,14 @@
+import os
+
+from app.services.extraction.image import ImageExtractor
+
 
 def test_image_extraction_uses_ocr_on_sample():
     sample = os.path.join(
         os.path.dirname(__file__), "../../data/samples/clinical_history_1_1.png"
     )
-import os
-
-from app.services.extraction.image import ImageExtractor
+    extractor = ImageExtractor()
+    result = extractor.extract(sample)
     # Ensure OCR produced some text and metadata was captured
     assert result.text and result.text.strip()
     assert "size" in result.meta
