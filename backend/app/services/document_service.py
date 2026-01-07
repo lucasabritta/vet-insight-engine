@@ -6,6 +6,8 @@ import json
 import uuid
 from datetime import datetime
 from pathlib import Path
+import mimetypes
+import zipfile
 from typing import Any
 
 from fastapi import HTTPException, UploadFile
@@ -64,11 +66,14 @@ async def save_upload_file(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+    # Infer a reliable content type for correct previewing (PDF vs download)
+    content_type = _infer_content_type(file_path, file.filename, file.content_type)
+
     metadata = {
         "id": doc_id,
         "original_filename": file.filename,
         "stored_filename": filename,
-        "content_type": file.content_type,
+        "content_type": content_type,
         "size": file_path.stat().st_size,
         "created_at": datetime.utcnow().isoformat() + "Z",
         "path": str(file_path),
@@ -82,6 +87,61 @@ async def save_upload_file(
         persist_document_metadata(db, metadata)
 
     return metadata
+
+
+def _infer_content_type(
+    file_path: Path, original_filename: str, uploaded_type: str | None
+) -> str:
+    """Infer a stable MIME type using upload hint, extension, and magic bytes.
+
+    Ensures PDFs are served with "application/pdf" so browsers preview inline.
+    Falls back to octet-stream only when unknown.
+    """
+    # 1) Trust explicit non-generic uploaded type if allowed
+    if uploaded_type and uploaded_type != "application/octet-stream":
+        if uploaded_type in settings.allowed_mimetypes:
+            return uploaded_type
+
+    # 2) Extension-based mapping
+    ext = Path(original_filename or "").suffix.lower()
+    ext_map: dict[str, str] = {
+        ".pdf": "application/pdf",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".doc": "application/msword",
+        ".txt": "text/plain",
+    }
+    if ext in ext_map:
+        return ext_map[ext]
+
+    guessed, _ = mimetypes.guess_type(original_filename or "")
+    if guessed and guessed in settings.allowed_mimetypes:
+        return guessed
+
+    # 3) Magic bytes quick checks
+    try:
+        with file_path.open("rb") as f:
+            head = f.read(8)
+        if head.startswith(b"%PDF-"):
+            return "application/pdf"
+        if head.startswith(b"\x89PNG\r\n\x1a\n"):
+            return "image/png"
+        if head.startswith(b"\xFF\xD8\xFF"):
+            return "image/jpeg"
+        if head.startswith(b"PK\x03\x04"):
+            # Likely a ZIP container (DOCX among others). Try check for DOCX structure.
+            try:
+                with zipfile.ZipFile(file_path) as zf:
+                    if any(n.startswith("word/") for n in zf.namelist()):
+                        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            except zipfile.BadZipFile:
+                pass
+    except Exception:
+        pass
+
+    return "application/octet-stream"
 
 
 def _metadata_from_model(doc) -> dict[str, Any]:
