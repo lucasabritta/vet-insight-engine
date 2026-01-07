@@ -1,5 +1,6 @@
 """Unit tests for LLM extraction service."""
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -8,6 +9,8 @@ import pytest
 from app.schemas.veterinary_record import VeterinaryRecordSchema
 from app.services.llm_service import (
     LLMExtractionError,
+    RetryConfig,
+    call_openai_with_retry,
     extract_structured_record,
 )
 
@@ -107,6 +110,67 @@ def test_extract_structured_record_validation_error(sample_extracted_data):
             extract_structured_record("Sample raw text")
 
         assert "validation" in str(exc_info.value).lower()
+
+
+def test_call_openai_with_retry_success_sync(sample_extracted_data):
+    """Test successful OpenAI API call with retry using asyncio.run."""
+    response_text = json.dumps(sample_extracted_data)
+
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = response_text
+
+    with patch("openai.AsyncOpenAI") as mock_openai:
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_openai.return_value = mock_client
+
+        result = asyncio.run(call_openai_with_retry("Test prompt"))
+        assert result == response_text
+
+
+def test_call_openai_with_retry_timeout_recovery_sync(sample_extracted_data):
+    """Test OpenAI API call recovers after asyncio timeout using asyncio.run."""
+    response_text = json.dumps(sample_extracted_data)
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = response_text
+
+    with patch("openai.AsyncOpenAI") as mock_openai:
+        mock_client = AsyncMock()
+        # First call times out, second succeeds
+        mock_client.chat.completions.create.side_effect = [
+            asyncio.TimeoutError("Request timed out"),
+            mock_response,
+        ]
+        mock_openai.return_value = mock_client
+
+        result = asyncio.run(
+            call_openai_with_retry(
+                "Test prompt",
+                retry_config=RetryConfig(max_retries=2, backoff_factor=0.01),
+            )
+        )
+        assert result == response_text
+
+
+def test_call_openai_with_retry_max_retries_exceeded_sync():
+    """Test OpenAI API raises error after max retries using asyncio.run."""
+
+    with patch("openai.AsyncOpenAI") as mock_openai:
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create.side_effect = asyncio.TimeoutError(
+            "Request timed out"
+        )
+        mock_openai.return_value = mock_client
+
+        with pytest.raises(LLMExtractionError) as exc_info:
+            asyncio.run(
+                call_openai_with_retry(
+                    "Test prompt",
+                    retry_config=RetryConfig(max_retries=2, backoff_factor=0.01),
+                )
+            )
+
+        assert "timed out" in str(exc_info.value).lower()
 
 
 def test_veterinary_record_schema_validation():

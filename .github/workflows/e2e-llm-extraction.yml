@@ -1,0 +1,102 @@
+name: e2e-llm-extraction
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-llm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: |
+          docker build -t vet-insight-backend:ci -f backend/Dockerfile backend
+
+      - name: Start backend
+        run: |
+          docker run -d --name vet-insight-backend-ci \
+            -p 8000:8000 \
+            -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
+            vet-insight-backend:ci
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health >/dev/null; then
+              echo "healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "service not healthy" >&2
+          exit 1
+
+      - name: Upload sample PDF
+        run: |
+          status=$(curl -s -o /tmp/upload.json -w "%{http_code}" \
+            -F "file=@backend/data/samples/clinical_history_1.pdf;type=application/pdf" \
+            http://localhost:8000/documents/upload)
+          echo "upload status: $status"
+          test "$status" = "200"
+          doc_id=$(python - <<'PY'
+            import json
+            import sys
+            with open('/tmp/upload.json','r',encoding='utf-8') as f:
+                data=json.load(f)
+            doc_id=data.get('id')
+            if not doc_id:
+                print('missing doc_id', file=sys.stderr)
+                sys.exit(1)
+            print(doc_id)
+            PY
+            )
+          echo "doc_id=$doc_id"
+          if [ -z "$doc_id" ]; then exit 1; fi
+          echo "$doc_id" > /tmp/doc_id
+
+      - name: Extract structured record
+        run: |
+          doc_id=$(cat /tmp/doc_id)
+          status=$(curl -s -o /tmp/extract.json -w "%{http_code}" -X POST http://localhost:8000/documents/$doc_id/extract)
+          echo "extract status: $status"
+          test "$status" = "200"
+
+      - name: Validate structured schema
+        run: |
+          python - <<'PY'
+            import json, sys
+            from pathlib import Path
+            extract = json.loads(Path('/tmp/extract.json').read_text(encoding='utf-8'))
+            record = extract.get('record')
+            if not record:
+                raise SystemExit('record missing')
+            required = ['pet','clinic_name','diagnoses','medications']
+            for k in required:
+                if k not in record:
+                    raise SystemExit(f'missing field: {k}')
+            pet = record['pet']
+            if not pet.get('name'):
+                raise SystemExit('missing pet.name')
+            print('schema validation passed')
+            PY
+
+      - name: Show sample output (truncated)
+        run: |
+          head -c 800 /tmp/extract.json || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f vet-insight-backend-ci || true

@@ -154,7 +154,11 @@ def process_document_full_pipeline(doc_id: str) -> Dict[str, Any]:
 
     try:
         structured_result = extract_structured_record_from_text(raw_text)
+    except HTTPException as e:
+        # Preserve upstream HTTP errors (e.g., 422 from LLM failures)
+        raise e
     except LLMExtractionError as e:
+        # Handle direct LLM errors if raised by mocks or underlying calls
         raise HTTPException(
             status_code=422,
             detail=f"LLM extraction failed: {str(e)}",
