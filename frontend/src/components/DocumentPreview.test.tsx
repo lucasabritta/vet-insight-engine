@@ -39,7 +39,7 @@ describe('DocumentPreview', () => {
     expect(iframe).toBeInTheDocument()
   })
 
-  it('renders docx preview via docx-preview and keeps download link', async () => {
+  it('renders docx preview with loading and status states', async () => {
     const buffer = new ArrayBuffer(8)
     // @ts-expect-error allow global assignment for tests
     global.fetch = vi.fn(() =>
@@ -60,9 +60,7 @@ describe('DocumentPreview', () => {
       />
     )
 
-    const link = await screen.findByRole('link', { name: /download and open/i })
-    expect(link).toBeInTheDocument()
-    await waitFor(() => expect(link).toBeInTheDocument())
-    expect(renderAsyncMock).not.toHaveBeenCalled()
+    expect(screen.getByText(/DOCX preview/i)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText(/Rendered/i)).toBeInTheDocument())
   })
 })

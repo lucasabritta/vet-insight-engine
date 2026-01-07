@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import UploadDropzone from './components/UploadDropzone'
 import DocumentPreview from './components/DocumentPreview'
-import { extractDocument, getDocumentFileUrl, uploadDocument } from './lib/api'
+import { extractDocument, getDocumentFileUrl, uploadDocument, getApiBaseUrl } from './lib/api'
+
+const UPLOAD_PROGRESS_START = 10
+const UPLOAD_PROGRESS_FETCH = 60
+const UPLOAD_PROGRESS_COMPLETE = 100
+const PROGRESS_RESET_DELAY_MS = 1200
 
 function App() {
   const [status, setStatus] = useState<string>('Loading...')
@@ -15,7 +20,8 @@ function App() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('http://localhost:8000/health')
+        const baseUrl = getApiBaseUrl()
+        const response = await fetch(`${baseUrl}/health`)
         const data = await response.json()
         setStatus(`API Status: ${data.status}`)
       } catch (error) {
@@ -30,22 +36,22 @@ function App() {
     setUploadError(null)
     const file = files[0]
     setSelectedFile(file)
-    setUploadProgress(10)
+    setUploadProgress(UPLOAD_PROGRESS_START)
     try {
       const result = await uploadDocument(file)
-      setUploadProgress(60)
+      setUploadProgress(UPLOAD_PROGRESS_FETCH)
       setDocId(result.id)
       // Trigger extraction
       setIsExtracting(true)
       const extracted = await extractDocument(result.id)
-      setUploadProgress(100)
+      setUploadProgress(UPLOAD_PROGRESS_COMPLETE)
       setRawText(extracted.raw_text || '')
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Upload failed'
       setUploadError(message)
     } finally {
       setIsExtracting(false)
-      setTimeout(() => setUploadProgress(0), 1200)
+      setTimeout(() => setUploadProgress(0), PROGRESS_RESET_DELAY_MS)
     }
   }
 
@@ -73,12 +79,12 @@ function App() {
             }}
           />
           {uploadProgress > 0 && (
-            <div className="mt-3 w-full bg-gray-200 rounded h-2" aria-label="Upload progress">
+            <div className="mt-3 w-full bg-gray-200 rounded h-2" aria-label="Upload progress" aria-live="polite" aria-atomic="true">
               <div className="h-2 rounded bg-blue-600 transition-all" style={{ width: `${uploadProgress}%` }} />
             </div>
           )}
           {uploadError && (
-            <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2" role="alert">
+            <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2" role="alert" aria-live="assertive">
               {uploadError}
             </div>
           )}
@@ -96,7 +102,7 @@ function App() {
             <h2 className="text-lg font-semibold text-gray-800 mb-2">Extracted Text</h2>
             {isExtracting && <div className="text-sm text-gray-500">Extracting…</div>}
             {!isExtracting && rawText && (
-              <div className="bg-white border rounded p-3 h-[70vh] overflow-auto whitespace-pre-wrap text-sm text-gray-800">
+              <div className="bg-white border rounded p-3 h-[70vh] overflow-auto whitespace-pre-wrap text-sm text-gray-800" aria-label="Extracted text from document" role="region">
                 {rawText}
               </div>
             )}
