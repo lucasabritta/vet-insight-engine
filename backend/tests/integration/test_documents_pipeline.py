@@ -79,34 +79,9 @@ def test_upload_document_integration(client, sample_pdf_path):
     assert data["filename"] == sample_pdf_path.name
 
 
-def test_extract_text_from_document(client, sample_pdf_path):
-    """Test extracting raw text from an uploaded document."""
-    if not sample_pdf_path.exists():
-        pytest.skip(f"Sample file not found: {sample_pdf_path}")
-
-    # Upload document
-    with open(sample_pdf_path, "rb") as f:
-        upload_response = client.post(
-            "/documents/upload",
-            files={"file": (sample_pdf_path.name, f, "application/pdf")},
-        )
-
-    doc_id = upload_response.json()["id"]
-
-    # Extract text
-    response = client.get(f"/documents/{doc_id}/extract")
-    assert response.status_code == 200
-
-    data = response.json()
-    assert "text" in data
-    assert "extraction_meta" in data
-    assert isinstance(data["text"], str)
-    assert len(data["text"]) > 0
-
-
-def test_extract_text_not_found(client):
-    """Test extracting from non-existent document."""
-    response = client.get("/documents/nonexistent/extract")
+def test_extract_structured_not_found(client):
+    """Test full extraction from non-existent document returns 404."""
+    response = client.post("/documents/nonexistent/extract")
     assert response.status_code == 404
 
 
