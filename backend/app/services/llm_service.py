@@ -142,8 +142,7 @@ async def call_openai_with_retry(
 
 
 def extract_structured_record(raw_text: str) -> VeterinaryRecordSchema:
-    """
-    Extract structured veterinary record from raw text using LLM.
+    """Extract structured veterinary record from raw text using LLM.
 
     Args:
         raw_text: Raw extracted text from document.
@@ -155,7 +154,27 @@ def extract_structured_record(raw_text: str) -> VeterinaryRecordSchema:
         LLMExtractionError: If LLM extraction fails.
         ValidationError: If extracted data doesn't conform to schema.
     """
-    prompt = f"""Extract structured veterinary medical record data from the following text.
+    return asyncio.run(_extract_structured_record_impl(raw_text))
+
+
+async def extract_structured_record_async(raw_text: str) -> VeterinaryRecordSchema:
+    """Async version of extract_structured_record.
+
+    Args:
+        raw_text: Raw extracted text from document.
+
+    Returns:
+        VeterinaryRecordSchema: Structured veterinary record.
+
+    Raises:
+        LLMExtractionError: If LLM extraction fails.
+        ValidationError: If extracted data doesn't conform to schema.
+    """
+    return await _extract_structured_record_impl(raw_text)
+
+
+async def _extract_structured_record_impl(raw_text: str) -> VeterinaryRecordSchema:
+    """Implementation of structured record extraction (async)."""    prompt = f"""Extract structured veterinary medical record data from the following text.
 Return a valid JSON object matching this structure:
 {{
   "pet": {{"name": "string", "species": "string", "breed": "string", "age": "string", "weight": "string", "microchip": "string"}},
@@ -181,77 +200,17 @@ Text to extract:
     try:
         if settings.llm_debug_logs:
             logger.info("llm.parse.start")
-        response_text = asyncio.run(call_openai_with_retry(prompt))
+        response_text = await call_openai_with_retry(prompt)
         extracted_data = json.loads(response_text)
         record = VeterinaryRecordSchema(**extracted_data)
         if settings.llm_debug_logs:
             logger.info("llm.parse.success")
         return record
-
     except json.JSONDecodeError as e:
         if settings.llm_debug_logs:
             logger.error("llm.parse.json_error msg=%s", str(e))
         raise LLMExtractionError(f"Failed to parse LLM response as JSON: {str(e)}")
-
     except ValidationError as e:
         if settings.llm_debug_logs:
             logger.error("llm.parse.validation_error msg=%s", str(e))
-        raise LLMExtractionError(f"Extracted data validation failed: {str(e)}")
-
-
-async def extract_structured_record_async(raw_text: str) -> VeterinaryRecordSchema:
-    """
-    Async version of extract_structured_record.
-
-    Args:
-        raw_text: Raw extracted text from document.
-
-    Returns:
-        VeterinaryRecordSchema: Structured veterinary record.
-
-    Raises:
-        LLMExtractionError: If LLM extraction fails.
-        ValidationError: If extracted data doesn't conform to schema.
-    """
-    prompt = f"""Extract structured veterinary medical record data from the following text.
-Return a valid JSON object matching this structure:
-{{
-  "pet": {{"name": "string", "species": "string", "breed": "string", "age": "string", "weight": "string", "microchip": "string"}},
-  "clinic_name": "string",
-  "veterinarian": "string",
-  "visit_date": "string",
-  "chief_complaint": "string",
-  "clinical_history": "string",
-  "physical_examination": "string",
-  "diagnoses": [{{"condition": "string", "date": "string", "severity": "string", "notes": "string"}}],
-  "medications": [{{"name": "string", "dosage": "string", "route": "string", "indication": "string"}}],
-  "treatment_plan": "string",
-  "prognosis": "string",
-  "follow_up": "string",
-  "notes": "string"
-}}
-
-Ensure all fields are accurate and properly categorized. Use null for missing information. Include all diagnoses and medications found.
-
-Text to extract:
-{raw_text}"""
-
-    try:
-        if settings.llm_debug_logs:
-            logger.info("llm.parse_async.start")
-        response_text = await call_openai_with_retry(prompt)
-        extracted_data = json.loads(response_text)
-        record = VeterinaryRecordSchema(**extracted_data)
-        if settings.llm_debug_logs:
-            logger.info("llm.parse_async.success")
-        return record
-
-    except json.JSONDecodeError as e:
-        if settings.llm_debug_logs:
-            logger.error("llm.parse_async.json_error msg=%s", str(e))
-        raise LLMExtractionError(f"Failed to parse LLM response as JSON: {str(e)}")
-
-    except ValidationError as e:
-        if settings.llm_debug_logs:
-            logger.error("llm.parse_async.validation_error msg=%s", str(e))
         raise LLMExtractionError(f"Extracted data validation failed: {str(e)}")

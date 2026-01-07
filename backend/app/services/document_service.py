@@ -1,12 +1,12 @@
-# noqa: F821
+"""Document processing and extraction service."""
+
 from __future__ import annotations
 
 import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
-
+from typing import Any
 
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -28,7 +28,7 @@ def _ensure_upload_dir() -> Path:
 
 async def save_upload_file(
     file: UploadFile, db: Session | None = None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Save an uploaded file to disk and return metadata.
 
     Raises HTTPException on validation or write errors.
@@ -84,7 +84,7 @@ async def save_upload_file(
     return metadata
 
 
-def _metadata_from_model(doc):
+def _metadata_from_model(doc) -> dict[str, Any]:
     return {
         "id": doc.id,
         "original_filename": doc.original_filename,
@@ -96,7 +96,7 @@ def _metadata_from_model(doc):
     }
 
 
-def read_metadata(doc_id: str, db: Session | None = None) -> Dict[str, Any]:
+def read_metadata(doc_id: str, db: Session | None = None) -> dict[str, Any]:
     # Always read from JSON file to ensure test for corrupt metadata passes
     upload_dir = Path(settings.upload_dir)
     meta_path = upload_dir / f"{doc_id}.json"
@@ -118,7 +118,7 @@ def get_file_path_from_meta(doc_id: str, db: Session | None = None) -> Path:
 
 def extract_text_from_document(
     doc_id: str, db: Session | None = None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Extract raw text from document using appropriate extractor.
 
     Returns dict with 'text' and 'extraction_meta' keys.
@@ -157,7 +157,7 @@ def extract_structured_record_from_text(
     raw_text: str,
     db: Session | None = None,
     doc_id: str | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Extract and structure veterinary record from raw text using LLM.
 
     Returns dict with 'record' key containing VeterinaryRecordSchema data.
@@ -180,7 +180,7 @@ def extract_structured_record_from_text(
 
 def process_document_full_pipeline(
     doc_id: str, db: Session | None = None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Full pipeline: extract text → structure with LLM.
 
     Returns dict with both raw text and structured record.
@@ -218,7 +218,7 @@ def process_document_full_pipeline(
     }
 
 
-def persist_document_metadata(db: Session, metadata: Dict[str, Any]) -> None:
+def persist_document_metadata(db: Session, metadata: dict[str, Any]) -> None:
     """Persist uploaded document metadata into the database."""
     existing = db.get(Document, metadata["id"])
     if existing:
@@ -246,8 +246,8 @@ def persist_document_metadata(db: Session, metadata: Dict[str, Any]) -> None:
 
 
 def upsert_structured_record(
-    db: Session, doc_id: str, record: Dict[str, Any]
-) -> Dict[str, Any]:
+    db: Session, doc_id: str, record: dict[str, Any]
+) -> dict[str, Any]:
     """Create or update the structured record for a document."""
     doc = db.get(Document, doc_id)
     if not doc:
