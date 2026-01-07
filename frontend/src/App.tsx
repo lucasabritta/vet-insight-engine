@@ -65,7 +65,12 @@ function App() {
         <section className="mb-6">
           <UploadDropzone
             onFilesSelected={handleFilesSelected}
-            accept={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }}
+            accept={{
+              'application/pdf': ['.pdf'],
+              'image/*': ['.png', '.jpg', '.jpeg'],
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+              'application/msword': ['.doc'],
+            }}
           />
           {uploadProgress > 0 && (
             <div className="mt-3 w-full bg-gray-200 rounded h-2" aria-label="Upload progress">

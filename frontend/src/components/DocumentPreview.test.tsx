@@ -1,7 +1,29 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { DocumentPreview } from './DocumentPreview'
+
+const renderAsyncMock = vi.fn(async (_buffer: ArrayBuffer, container?: HTMLElement | null) => {
+  if (container) {
+    const node = container.ownerDocument.createElement('div')
+    node.textContent = 'docx content'
+    container.appendChild(node)
+  }
+})
+
+vi.mock(
+  'docx-preview',
+  () => ({
+    __esModule: true,
+    renderAsync: renderAsyncMock,
+  })
+)
+
+afterEach(() => {
+  vi.resetAllMocks()
+  // @ts-expect-error allow reset
+  global.fetch = undefined
+})
 
 describe('DocumentPreview', () => {
   it('renders image tag for image URL', () => {
@@ -15,5 +37,32 @@ describe('DocumentPreview', () => {
     render(<DocumentPreview fileUrl="http://localhost/file.pdf" contentType="application/pdf" />)
     const iframe = screen.getByTitle(/pdf preview/i)
     expect(iframe).toBeInTheDocument()
+  })
+
+  it('renders docx preview via docx-preview and keeps download link', async () => {
+    const buffer = new ArrayBuffer(8)
+    // @ts-expect-error allow global assignment for tests
+    global.fetch = vi.fn(() =>
+      Promise.resolve(
+        new Response(buffer, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          },
+        })
+      )
+    )
+
+    render(
+      <DocumentPreview
+        fileUrl="http://localhost/file.docx"
+        contentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      />
+    )
+
+    const link = await screen.findByRole('link', { name: /download and open/i })
+    expect(link).toBeInTheDocument()
+    await waitFor(() => expect(link).toBeInTheDocument())
+    expect(renderAsyncMock).not.toHaveBeenCalled()
   })
 })

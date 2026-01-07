@@ -37,9 +37,9 @@ export const UploadDropzone = ({ onFilesSelected, accept, multiple = false }: Up
     >
       <input {...getInputProps()} />
       <p className="text-gray-700">
-        {isDragActive ? 'Drop the files here…' : 'Drag and drop a PDF or image here, or click to select'}
+        {isDragActive ? 'Drop the files here…' : 'Drag and drop a document here, or click to select'}
       </p>
-      <p className="text-xs text-gray-500 mt-2">Accepted: PDF, PNG, JPEG</p>
+      <p className="text-xs text-gray-500 mt-2">Accepted: PDF, PNG, JPEG, DOCX</p>
     </div>
   )
 }

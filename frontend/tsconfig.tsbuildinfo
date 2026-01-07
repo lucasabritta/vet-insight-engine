@@ -1,0 +1,1 @@
+{"root":["./src/App.test.tsx","./src/App.tsx","./src/main.tsx","./src/components/DocumentPreview.test.tsx","./src/components/DocumentPreview.tsx","./src/components/UploadDropzone.test.tsx","./src/components/UploadDropzone.tsx","./src/lib/api.ts"],"version":"5.9.3"}

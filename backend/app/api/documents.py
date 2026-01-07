@@ -34,10 +34,12 @@ def get_document(doc_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
 def download_document(doc_id: str, db: Session = Depends(get_db)) -> FileResponse:
     file_path = document_service.get_file_path_from_meta(doc_id, db=db)
     meta = document_service.read_metadata(doc_id, db=db)
+    # Serve inline to allow in-browser preview (especially for PDFs)
+    headers = {"Content-Disposition": "inline"}
     return FileResponse(
         path=str(file_path),
-        filename=meta.get("original_filename"),
         media_type=meta.get("content_type"),
+        headers=headers,
     )
 
 
