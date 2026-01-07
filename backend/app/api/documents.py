@@ -28,3 +28,12 @@ def download_document(doc_id: str):
         filename=meta.get("original_filename"),
         media_type=meta.get("content_type"),
     )
+
+
+@router.post("/{doc_id}/extract")
+def extract_and_structure_document(doc_id: str) -> dict:
+    """Full pipeline: extract text and structure with LLM.
+
+    Returns raw text and structured veterinary record.
+    """
+    return document_service.process_document_full_pipeline(doc_id)

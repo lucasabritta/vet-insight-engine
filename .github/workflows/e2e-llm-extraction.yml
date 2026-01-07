@@ -1,0 +1,96 @@
+name: E2E LLM Extraction
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-llm:
+    name: E2E LLM Extraction Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: |
+          docker build -t vet-insight-backend:ci -f backend/Dockerfile backend
+
+      - name: Start backend
+        run: |
+          docker run -d --name vet-insight-backend-ci \
+            -p 8000:8000 \
+            -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
+            vet-insight-backend:ci
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health >/dev/null; then
+              echo "healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "service not healthy" >&2
+          exit 1
+
+      - name: Upload sample PDF
+        run: |
+          status=$(curl -s -o /tmp/upload.json -w "%{http_code}" \
+            -F "file=@backend/data/samples/clinical_history_1.pdf;type=application/pdf" \
+            http://localhost:8000/documents/upload)
+          echo "upload status: $status"
+          test "$status" = "200"
+          doc_id=$(jq -r '.id // empty' /tmp/upload.json)
+          if [ -z "$doc_id" ]; then
+            echo "missing doc_id" >&2
+            exit 1
+          fi
+          echo "doc_id=$doc_id"
+          echo "$doc_id" > /tmp/doc_id
+
+      - name: Extract structured record
+        run: |
+          doc_id=$(cat /tmp/doc_id)
+          status=$(curl -s -o /tmp/extract.json -w "%{http_code}" -X POST http://localhost:8000/documents/$doc_id/extract)
+          echo "extract status: $status"
+          test "$status" = "200"
+
+      - name: Validate structured schema
+        run: |
+          record=$(jq '.record' /tmp/extract.json)
+          if [ "$record" = "null" ]; then
+            echo "record missing" >&2
+            exit 1
+          fi
+          for k in pet clinic_name diagnoses medications; do
+            if ! jq -e --arg k "$k" '.record | has($k)' /tmp/extract.json >/dev/null; then
+              echo "missing field: $k" >&2
+              exit 1
+            fi
+          done
+          pet_name=$(jq -r '.record.pet.name // empty' /tmp/extract.json)
+          if [ -z "$pet_name" ]; then
+            echo "missing pet.name" >&2
+            exit 1
+          fi
+          echo "schema validation passed"
+
+      - name: Show sample output
+        run: |
+          cat /tmp/extract.json || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f vet-insight-backend-ci || true
