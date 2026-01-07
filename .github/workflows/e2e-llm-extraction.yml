@@ -51,20 +51,12 @@ jobs:
             http://localhost:8000/documents/upload)
           echo "upload status: $status"
           test "$status" = "200"
-          doc_id=$(python - <<'PY'
-            import json
-            import sys
-            with open('/tmp/upload.json','r',encoding='utf-8') as f:
-                data=json.load(f)
-            doc_id=data.get('id')
-            if not doc_id:
-                print('missing doc_id', file=sys.stderr)
-                sys.exit(1)
-            print(doc_id)
-            PY
-            )
+          doc_id=$(jq -r '.id // empty' /tmp/upload.json)
+          if [ -z "$doc_id" ]; then
+            echo "missing doc_id" >&2
+            exit 1
+          fi
           echo "doc_id=$doc_id"
-          if [ -z "$doc_id" ]; then exit 1; fi
           echo "$doc_id" > /tmp/doc_id
 
       - name: Extract structured record
@@ -76,22 +68,23 @@ jobs:
 
       - name: Validate structured schema
         run: |
-          python - <<'PY'
-            import json, sys
-            from pathlib import Path
-            extract = json.loads(Path('/tmp/extract.json').read_text(encoding='utf-8'))
-            record = extract.get('record')
-            if not record:
-                raise SystemExit('record missing')
-            required = ['pet','clinic_name','diagnoses','medications']
-            for k in required:
-                if k not in record:
-                    raise SystemExit(f'missing field: {k}')
-            pet = record['pet']
-            if not pet.get('name'):
-                raise SystemExit('missing pet.name')
-            print('schema validation passed')
-            PY
+          record=$(jq '.record' /tmp/extract.json)
+          if [ "$record" = "null" ]; then
+            echo "record missing" >&2
+            exit 1
+          fi
+          for k in pet clinic_name diagnoses medications; do
+            if ! jq -e --arg k "$k" '.record | has($k)' /tmp/extract.json >/dev/null; then
+              echo "missing field: $k" >&2
+              exit 1
+            fi
+          done
+          pet_name=$(jq -r '.record.pet.name // empty' /tmp/extract.json)
+          if [ -z "$pet_name" ]; then
+            echo "missing pet.name" >&2
+            exit 1
+          fi
+          echo "schema validation passed"
 
       - name: Show sample output (truncated)
         run: |
