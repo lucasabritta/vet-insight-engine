@@ -9,6 +9,11 @@ from typing import Any, Dict
 from fastapi import HTTPException, UploadFile
 
 from app.core.config import settings
+from app.services.extraction.factory import get_extractor
+from app.services.llm_service import (
+    extract_structured_record,
+    LLMExtractionError,
+)
 
 
 def _ensure_upload_dir() -> Path:
@@ -86,3 +91,80 @@ def get_file_path_from_meta(doc_id: str) -> Path:
     if not path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     return path
+
+
+def extract_text_from_document(doc_id: str) -> Dict[str, Any]:
+    """Extract raw text from document using appropriate extractor.
+
+    Returns dict with 'text' and 'extraction_meta' keys.
+    Raises HTTPException on extraction errors.
+    """
+    meta = read_metadata(doc_id)
+    file_path = get_file_path_from_meta(doc_id)
+    content_type = meta.get("content_type")
+
+    try:
+        extractor = get_extractor(content_type)
+        result = extractor.extract(str(file_path))
+        return {
+            "text": result.text,
+            "extraction_meta": result.meta,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=415, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")
+
+
+def extract_structured_record_from_text(
+    raw_text: str,
+) -> Dict[str, Any]:
+    """Extract and structure veterinary record from raw text using LLM.
+
+    Returns dict with 'record' key containing VeterinaryRecordSchema data.
+    Raises HTTPException on LLM errors.
+    """
+    try:
+        record = extract_structured_record(raw_text)
+        return {
+            "record": record.model_dump(),
+        }
+    except LLMExtractionError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=f"LLM extraction failed: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+
+def process_document_full_pipeline(doc_id: str) -> Dict[str, Any]:
+    """Full pipeline: extract text → structure with LLM.
+
+    Returns dict with both raw text and structured record.
+    """
+    extraction_result = extract_text_from_document(doc_id)
+    raw_text = extraction_result["text"]
+
+    if not raw_text or not raw_text.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="No text could be extracted from document",
+        )
+
+    try:
+        structured_result = extract_structured_record_from_text(raw_text)
+    except LLMExtractionError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=f"LLM extraction failed: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+    return {
+        "id": doc_id,
+        "raw_text": raw_text,
+        "extraction_meta": extraction_result["extraction_meta"],
+        "record": structured_result["record"],
+    }
