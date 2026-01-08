@@ -25,11 +25,6 @@ async def upload_document(
     return {"id": metadata["id"], "filename": metadata["original_filename"]}
 
 
-@router.get("/{doc_id}")
-def get_document(doc_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
-    return document_service.read_metadata(doc_id, db=db)
-
-
 @router.get("/{doc_id}/file")
 def download_document(doc_id: str, db: Session = Depends(get_db)) -> FileResponse:
     file_path = document_service.get_file_path_from_meta(doc_id, db=db)

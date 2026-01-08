@@ -21,13 +21,6 @@ def test_upload_and_download(client, tmp_path):
     assert "id" in data
     doc_id = data["id"]
 
-    # get metadata
-    meta = client.get(f"/documents/{doc_id}")
-    assert meta.status_code == 200
-    meta_json = meta.json()
-    assert meta_json["id"] == doc_id
-    assert meta_json["original_filename"] == "sample.txt"
-
     # download file
     dl = client.get(f"/documents/{doc_id}/file")
     assert dl.status_code == 200
@@ -42,8 +35,9 @@ def test_upload_empty_file(client, tmp_path):
     resp = client.post("/documents/upload", files=files)
     assert resp.status_code == 200
     doc_id = resp.json()["id"]
-    meta = client.get(f"/documents/{doc_id}").json()
-    assert meta["size"] == 0
+    # Verify file can be downloaded
+    dl = client.get(f"/documents/{doc_id}/file")
+    assert dl.status_code == 200
 
 
 def test_upload_large_file(client, tmp_path):
@@ -54,8 +48,11 @@ def test_upload_large_file(client, tmp_path):
     resp = client.post("/documents/upload", files=files)
     assert resp.status_code == 200
     doc_id = resp.json()["id"]
-    meta = client.get(f"/documents/{doc_id}").json()
-    assert meta["size"] == len(content)
+
+    # Verify file can be downloaded with correct size
+    dl = client.get(f"/documents/{doc_id}/file")
+    assert dl.status_code == 200
+    assert len(dl.content) == len(content)
 
 
 def test_corrupt_metadata_returns_500(client, tmp_path):
@@ -70,14 +67,9 @@ def test_corrupt_metadata_returns_500(client, tmp_path):
     meta_path = Path(settings.upload_dir) / f"{doc_id}.json"
     meta_path.write_text("not-a-json")
 
-    # metadata read should fail
-    resp2 = client.get(f"/documents/{doc_id}")
-    # Accept either 500 (internal error) or 422 (validation error) as valid failure
-    if resp2.status_code not in (500, 422):
-        print(f"Unexpected status: {resp2.status_code}, body: {resp2.text}")
-    assert resp2.status_code in (500, 422)
-    if resp2.status_code == 500:
-        assert "Failed to read metadata" in resp2.text
+    # File download should fail when metadata is corrupt
+    resp2 = client.get(f"/documents/{doc_id}/file")
+    assert resp2.status_code == 500
 
 
 def test_download_missing_file(client, tmp_path):
@@ -89,12 +81,17 @@ def test_download_missing_file(client, tmp_path):
     assert resp.status_code == 200
     doc_id = resp.json()["id"]
 
-    # remove the stored file
-    meta = client.get(f"/documents/{doc_id}").json()
+    # Read metadata to find the actual file path
+    meta_path = Path(settings.upload_dir) / f"{doc_id}.json"
+    import json
+    meta = json.loads(meta_path.read_text())
     file_path = Path(meta["path"])
+
+    # Remove the stored file
     if file_path.exists():
         os.remove(file_path)
 
+    # Download should return 404
     dl = client.get(f"/documents/{doc_id}/file")
     assert dl.status_code == 404
 

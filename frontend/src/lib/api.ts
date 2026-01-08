@@ -8,12 +8,6 @@ export type ExtractResponse = {
 
 export type VeterinaryRecord = Record<string, unknown>;
 
-export type GetDocumentResponse = {
-  id: string;
-  filename: string;
-  record: VeterinaryRecord;
-};
-
 export type UpdateDocumentResponse = {
   id: string;
   record: VeterinaryRecord;
@@ -61,12 +55,6 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
 export async function extractDocument(docId: string): Promise<ExtractResponse> {
   return apiClient<ExtractResponse>(`/documents/${docId}/extract`, {
     method: 'POST',
-  });
-}
-
-export async function getDocument(docId: string): Promise<GetDocumentResponse> {
-  return apiClient<GetDocumentResponse>(`/documents/${docId}`, {
-    method: 'GET',
   });
 }
 

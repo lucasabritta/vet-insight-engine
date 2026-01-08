@@ -33,11 +33,7 @@ def test_upload_samples(client, tmp_path):
         doc_id = resp.json().get("id")
         assert doc_id
 
-        meta = client.get(f"/documents/{doc_id}")
-        assert meta.status_code == 200
-        meta_json = meta.json()
-        assert meta_json["original_filename"] == sample.name
-
+        # Verify file can be downloaded
         dl = client.get(f"/documents/{doc_id}/file")
         assert dl.status_code == 200
         assert dl.content == content
