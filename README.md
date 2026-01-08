@@ -1,6 +1,7 @@
 [![E2E LLM Extraction](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/e2e-llm-extraction.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/e2e-llm-extraction.yml)
 [![Lint](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/lint.yml)
 [![Tests](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/test.yml)
+[![Integration Test](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/integration.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/integration.yml)
 
 # Vet Insight Engine
 
@@ -102,7 +103,7 @@ docker run --rm -v ${PWD}:/app -w /app -e DATABASE_URL=postgresql://user:passwor
 **Frontend (vitest in container):**
 
 ```powershell
-docker run --rm -v ${PWD}/frontend:/app -w /app node:20-slim sh -c "npm install --legacy-peer-deps && npm run test -- --run"
+docker run --rm -v ${PWD}/frontend:/app -w /app node:20-slim sh -c "npm install && npm run test -- --run"
 ```
 
 ## Future Improvements

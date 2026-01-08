@@ -59,7 +59,11 @@ jobs:
           doc_id=$(cat /tmp/doc_id)
           status=$(curl -s -o /tmp/extract.json -w "%{http_code}" -X POST http://localhost:8000/documents/$doc_id/extract)
           echo "extract status: $status"
-          test "$status" = "200"
+          if [ "$status" != "200" ]; then
+            echo "Error response body:"
+            cat /tmp/extract.json || echo "no response body"
+            exit 1
+          fi
 
       - name: Validate structured schema
         run: |

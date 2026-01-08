@@ -28,7 +28,7 @@ function App() {
         const data = await response.json()
         setStatus(`API Status: ${data.status}`)
         console.debug('health.check.success', { status: data.status })
-      } catch (error) {
+      } catch {
         setStatus('API is not available')
         console.error('health.check.error')
       }
