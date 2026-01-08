@@ -1,6 +1,7 @@
-"""FastAPI application initialization."""
-
 from contextlib import asynccontextmanager
+import logging
+import importlib
+import pkgutil
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,31 +9,33 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
-import importlib
-import pkgutil
 import app.api as api_package
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Manage application lifecycle."""
-    print(f"Application starting in {settings.environment} mode")
-    # Ensure tables exist (for development environments). In production, use migrations.
+    logger = logging.getLogger("app")
+    logger.info("startup env=%s", settings.environment)
     try:
         Base.metadata.create_all(bind=engine)
     except Exception as exc:
-        print(f"DB init error: {exc}")
+        logging.getLogger("app").exception("db.init.error msg=%s", str(exc))
     yield
-    print("Application shutting down")
+    logger.info("shutdown")
 
 
 def create_app() -> FastAPI:
-    """Create and configure FastAPI application."""
     app = FastAPI(
         title=settings.app_name,
         description="Veterinary insight document processing engine",
         version="0.1.0",
         lifespan=lifespan,
+    )
+
+    # basic logging config
+    logging.basicConfig(
+        level=logging.DEBUG if settings.debug else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
     app.add_middleware(
@@ -43,7 +46,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Auto-discover and include routers from the `app.api` package.
     for finder, name, ispkg in pkgutil.iter_modules(api_package.__path__):
         module = importlib.import_module(f"{api_package.__name__}.{name}")
         router = getattr(module, "router", None)

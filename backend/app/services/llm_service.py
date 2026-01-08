@@ -17,13 +17,13 @@ logger = logging.getLogger("app.services.llm")
 
 
 class LLMExtractionError(Exception):
-    """Custom exception for LLM extraction failures."""
+    """Raised when LLM extraction fails."""
 
     pass
 
 
 class RetryConfig:
-    """Configuration for retry logic."""
+    """Retry configuration."""
 
     def __init__(
         self, max_retries: int = 3, backoff_factor: float = 1.0, timeout: int = 30
@@ -39,21 +39,7 @@ async def call_openai_with_retry(
     retry_config: Optional[RetryConfig] = None,
     temperature: float = 0.2,
 ) -> str:
-    """
-    Call OpenAI API with retry logic and error handling.
-
-    Args:
-        prompt: The prompt to send to OpenAI.
-        model: The model to use (default: gpt-4o-mini).
-        retry_config: Retry configuration.
-        temperature: Temperature for LLM (lower = more deterministic).
-
-    Returns:
-        The LLM response text.
-
-    Raises:
-        LLMExtractionError: If extraction fails after retries.
-    """
+    """Call OpenAI API with retry and error handling."""
     if retry_config is None:
         retry_config = RetryConfig()
 
@@ -142,34 +128,12 @@ async def call_openai_with_retry(
 
 
 def extract_structured_record(raw_text: str) -> VeterinaryRecordSchema:
-    """Extract structured veterinary record from raw text using LLM.
-
-    Args:
-        raw_text: Raw extracted text from document.
-
-    Returns:
-        VeterinaryRecordSchema: Structured veterinary record.
-
-    Raises:
-        LLMExtractionError: If LLM extraction fails.
-        ValidationError: If extracted data doesn't conform to schema.
-    """
+    """Extract structured veterinary record from raw text using LLM."""
     return asyncio.run(_extract_structured_record_impl(raw_text))
 
 
 async def extract_structured_record_async(raw_text: str) -> VeterinaryRecordSchema:
-    """Async version of extract_structured_record.
-
-    Args:
-        raw_text: Raw extracted text from document.
-
-    Returns:
-        VeterinaryRecordSchema: Structured veterinary record.
-
-    Raises:
-        LLMExtractionError: If LLM extraction fails.
-        ValidationError: If extracted data doesn't conform to schema.
-    """
+    """Async variant of structured record extraction."""
     return await _extract_structured_record_impl(raw_text)
 
 

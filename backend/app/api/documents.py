@@ -1,5 +1,4 @@
-"""Document API routes."""
-
+import logging
 import json
 from typing import Any
 
@@ -21,15 +20,21 @@ async def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
+    logging.getLogger("app.api.documents").info(
+        "upload.start filename=%s content_type=%s", file.filename, file.content_type
+    )
     metadata = await document_service.save_upload_file(file, db=db)
+    logging.getLogger("app.api.documents").info(
+        "upload.saved id=%s size=%s", metadata["id"], metadata.get("size")
+    )
     return {"id": metadata["id"], "filename": metadata["original_filename"]}
 
 
 @router.get("/{doc_id}/file")
 def download_document(doc_id: str, db: Session = Depends(get_db)) -> FileResponse:
+    logging.getLogger("app.api.documents").debug("download.start id=%s", doc_id)
     file_path = document_service.get_file_path_from_meta(doc_id, db=db)
     meta = document_service.read_metadata(doc_id, db=db)
-    # Serve inline to allow in-browser preview (especially for PDFs)
     headers = {"Content-Disposition": "inline"}
     return FileResponse(
         path=str(file_path),
@@ -42,10 +47,7 @@ def download_document(doc_id: str, db: Session = Depends(get_db)) -> FileRespons
 def extract_and_structure_document(
     doc_id: str, db: Session = Depends(get_db)
 ) -> dict[str, Any]:
-    """Full pipeline: extract text and structure with LLM.
-
-    Returns raw text and structured veterinary record.
-    """
+    logging.getLogger("app.api.documents").info("extract.start id=%s", doc_id)
     return document_service.process_document_full_pipeline(doc_id, db=db)
 
 
@@ -55,15 +57,12 @@ def update_document_record(
     payload: dict[str, Any],
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    """Update stored structured record for the given document.
-
-    Accepts payload with a 'record' field conforming to VeterinaryRecordSchema.
-    Returns updated record JSON.
-    """
+    logging.getLogger("app.api.documents").info("record.update.start id=%s", doc_id)
     if "record" not in payload:
         raise HTTPException(status_code=422, detail="'record' field required")
     record = VeterinaryRecordSchema.model_validate(payload["record"])
     updated = document_service.upsert_structured_record(
         db, doc_id, json.loads(record.model_dump_json())
     )
+    logging.getLogger("app.api.documents").info("record.update.success id=%s", doc_id)
     return {"id": doc_id, "record": updated}
