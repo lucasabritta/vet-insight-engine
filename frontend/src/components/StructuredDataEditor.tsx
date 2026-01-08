@@ -20,14 +20,13 @@ export function StructuredDataEditor({
   onSaveSuccess,
   onSaveError,
 }: StructuredDataEditorProps) {
-  // State management
   const [errors] = useState<Record<string, string>>({})
 
   const { formData, isDirty, getFormValue, updateField, updateNestedArray, resetDirty } =
     useFormData(initialData)
   const saveState = useSaveState()
-  // Array operations
   const handleAddDiagnosis = useCallback(() => {
+    console.info('editor.diagnosis.add')
     updateNestedArray('diagnoses', (current) => [
       ...current,
       { condition: '', date: '', severity: '', notes: '' },
@@ -36,6 +35,7 @@ export function StructuredDataEditor({
 
   const handleRemoveDiagnosis = useCallback(
     (idx: number) => {
+      console.info('editor.diagnosis.remove', { index: idx })
       updateNestedArray('diagnoses', (current) => current.filter((_, i) => i !== idx))
     },
     [updateNestedArray]
@@ -43,6 +43,7 @@ export function StructuredDataEditor({
 
   const handleDiagnosisChange = useCallback(
     (idx: number, field: string, value: string) => {
+      console.debug('editor.diagnosis.change', { index: idx, field })
       updateNestedArray('diagnoses', (current) => {
         const updated = [...current]
         updated[idx] = { ...updated[idx], [field]: value }
@@ -53,6 +54,7 @@ export function StructuredDataEditor({
   )
 
   const handleAddMedication = useCallback(() => {
+    console.info('editor.medication.add')
     updateNestedArray('medications', (current) => [
       ...current,
       { name: '', dosage: '', route: '', indication: '' },
@@ -61,6 +63,7 @@ export function StructuredDataEditor({
 
   const handleRemoveMedication = useCallback(
     (idx: number) => {
+      console.info('editor.medication.remove', { index: idx })
       updateNestedArray('medications', (current) => current.filter((_, i) => i !== idx))
     },
     [updateNestedArray]
@@ -68,6 +71,7 @@ export function StructuredDataEditor({
 
   const handleMedicationChange = useCallback(
     (idx: number, field: string, value: string) => {
+      console.debug('editor.medication.change', { index: idx, field })
       updateNestedArray('medications', (current) => {
         const updated = [...current]
         updated[idx] = { ...updated[idx], [field]: value }
@@ -77,8 +81,8 @@ export function StructuredDataEditor({
     [updateNestedArray]
   )
 
-  // Save operations
   const handleSave = useCallback(async () => {
+    console.info('editor.save.start', { id: docId })
     saveState.beginSave()
 
     try {
@@ -87,10 +91,12 @@ export function StructuredDataEditor({
       saveState.resetConfirmation()
       onSaveSuccess?.()
       resetDirty()
+      console.info('editor.save.success', { id: docId })
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to save record'
       saveState.failSave(errorMsg)
       onSaveError?.(errorMsg)
+      console.error('editor.save.error', { id: docId, message: errorMsg })
     }
   }, [docId, formData, saveState, onSaveSuccess, onSaveError, resetDirty])
 
@@ -99,7 +105,6 @@ export function StructuredDataEditor({
     saveState.setShowConfirmation(true)
   }
 
-  // Helpers
   const getDiagnoses = (): Array<Record<string, unknown>> => {
     return (formData.diagnoses as Array<Record<string, unknown>>) || []
   }
@@ -111,7 +116,6 @@ export function StructuredDataEditor({
 
   return (
     <div className="bg-white border rounded-lg p-6 shadow-sm" role="region" aria-labelledby="editor-title">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 id="editor-title" className="text-2xl font-bold text-gray-900">
@@ -128,16 +132,13 @@ export function StructuredDataEditor({
         </div>
       </div>
 
-      {/* Error Message */}
       {saveState.saveError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm" role="alert">
           Error: {saveState.saveError}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmitClick} className="space-y-8">
-        {/* Pet Information */}
         <section>
           <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
             Pet Information
@@ -182,7 +183,6 @@ export function StructuredDataEditor({
           </div>
         </section>
 
-        {/* Clinic & Veterinarian */}
         <section>
           <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
             Clinic & Veterinarian
@@ -207,7 +207,6 @@ export function StructuredDataEditor({
           </div>
         </section>
 
-        {/* Clinical Details */}
         <section>
           <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
             Clinical Details
@@ -233,7 +232,6 @@ export function StructuredDataEditor({
           />
         </section>
 
-        {/* Diagnoses */}
         <section>
           <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
             Diagnoses
@@ -247,7 +245,6 @@ export function StructuredDataEditor({
           />
         </section>
 
-        {/* Medications */}
         <section>
           <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
             Medications
@@ -261,7 +258,6 @@ export function StructuredDataEditor({
           />
         </section>
 
-        {/* Treatment Plan */}
         <section>
           <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
             Treatment & Follow-up
@@ -296,7 +292,6 @@ export function StructuredDataEditor({
           />
         </section>
 
-        {/* Actions */}
         <div className="flex gap-3 pt-4 border-t">
           <button
             type="submit"

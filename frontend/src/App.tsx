@@ -22,12 +22,15 @@ function App() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
+        console.debug('health.check.start')
         const baseUrl = getApiBaseUrl()
         const response = await fetch(`${baseUrl}/health`)
         const data = await response.json()
         setStatus(`API Status: ${data.status}`)
+        console.debug('health.check.success', { status: data.status })
       } catch (error) {
         setStatus('API is not available')
+        console.error('health.check.error')
       }
     }
 
@@ -41,18 +44,22 @@ function App() {
     setSelectedFile(file)
     setUploadProgress(UPLOAD_PROGRESS_START)
     try {
+      console.info('upload.start', { name: file.name, size: file.size, type: file.type })
       const result = await uploadDocument(file)
       setUploadProgress(UPLOAD_PROGRESS_FETCH)
       setDocId(result.id)
       // Trigger extraction
       setIsExtracting(true)
+      console.info('extract.start', { id: result.id })
       const extracted = await extractDocument(result.id)
       setUploadProgress(UPLOAD_PROGRESS_COMPLETE)
       setRawText(extracted.raw_text || '')
       setExtractedData(extracted.record || {})
+      console.info('extract.success', { id: result.id })
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Upload failed'
       setUploadError(message)
+      console.error('upload.extract.error', { message })
     } finally {
       setIsExtracting(false)
       setTimeout(() => setUploadProgress(0), PROGRESS_RESET_DELAY_MS)

@@ -33,6 +33,7 @@ export function useFormData(initialData: Record<string, unknown>): UseFormDataRe
 
   const trackChange = useCallback((field: string, oldValue: unknown, newValue: unknown) => {
     if (oldValue === newValue) return
+    console.debug('form.change', { field })
     setChangeHistory((prev) => [
       { timestamp: new Date(), field, oldValue, newValue },
       ...prev.slice(0, MAX_CHANGE_HISTORY - 1),
@@ -70,9 +71,11 @@ export function useFormData(initialData: Record<string, unknown>): UseFormDataRe
   )
 
   const clearHistory = useCallback(() => {
+    console.debug('form.history.clear')
     setChangeHistory([])
   }, [])
 const resetDirty = useCallback(() => {
+    console.debug('form.resetDirty')
     setBaselineData(formData)
     setChangeHistory([])
   }, [formData])
