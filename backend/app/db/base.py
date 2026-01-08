@@ -1,5 +1,3 @@
-"""SQLAlchemy base metadata."""
-
 from sqlalchemy.orm import DeclarativeBase
 
 

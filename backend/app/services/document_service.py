@@ -1,5 +1,3 @@
-"""Document processing and extraction service."""
-
 from __future__ import annotations
 
 import json
@@ -9,6 +7,7 @@ from pathlib import Path
 import mimetypes
 import zipfile
 from typing import Any
+import logging
 
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -16,10 +15,9 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.model_exports import Document, StructuredRecord
 from app.services.extraction.factory import get_extractor
-from app.services.llm_service import (
-    extract_structured_record,
-    LLMExtractionError,
-)
+from app.services.llm_service import extract_structured_record, LLMExtractionError
+
+logger = logging.getLogger("app.services.documents")
 
 
 def _ensure_upload_dir() -> Path:
@@ -31,16 +29,12 @@ def _ensure_upload_dir() -> Path:
 async def save_upload_file(
     file: UploadFile, db: Session | None = None
 ) -> dict[str, Any]:
-    """Save an uploaded file to disk and return metadata.
-
-    Raises HTTPException on validation or write errors.
-    """
+    """Save uploaded file and return metadata."""
     upload_dir = _ensure_upload_dir()
     doc_id = uuid.uuid4().hex
     filename = f"{doc_id}_{file.filename}"
     file_path = upload_dir / filename
 
-    # validate content type
     if file.content_type and file.content_type not in settings.allowed_mimetypes:
         raise HTTPException(status_code=415, detail="Unsupported media type")
 
@@ -66,7 +60,6 @@ async def save_upload_file(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-    # Infer a reliable content type for correct previewing (PDF vs download)
     content_type = _infer_content_type(file_path, file.filename, file.content_type)
 
     metadata = {
@@ -86,23 +79,25 @@ async def save_upload_file(
     if db is not None:
         persist_document_metadata(db, metadata)
 
+    logger.info(
+        "upload.persisted id=%s filename=%s size=%s type=%s",
+        doc_id,
+        file.filename,
+        metadata["size"],
+        content_type,
+    )
+
     return metadata
 
 
 def _infer_content_type(
     file_path: Path, original_filename: str, uploaded_type: str | None
 ) -> str:
-    """Infer a stable MIME type using upload hint, extension, and magic bytes.
-
-    Ensures PDFs are served with "application/pdf" so browsers preview inline.
-    Falls back to octet-stream only when unknown.
-    """
-    # 1) Trust explicit non-generic uploaded type if allowed
+    """Infer a stable MIME type."""
     if uploaded_type and uploaded_type != "application/octet-stream":
         if uploaded_type in settings.allowed_mimetypes:
             return uploaded_type
 
-    # 2) Extension-based mapping
     ext = Path(original_filename or "").suffix.lower()
     ext_map: dict[str, str] = {
         ".pdf": "application/pdf",
@@ -120,7 +115,6 @@ def _infer_content_type(
     if guessed and guessed in settings.allowed_mimetypes:
         return guessed
 
-    # 3) Magic bytes quick checks
     try:
         with file_path.open("rb") as f:
             head = f.read(8)
@@ -131,7 +125,6 @@ def _infer_content_type(
         if head.startswith(b"\xff\xd8\xff"):
             return "image/jpeg"
         if head.startswith(b"PK\x03\x04"):
-            # Likely a ZIP container (DOCX among others). Try check for DOCX structure.
             try:
                 with zipfile.ZipFile(file_path) as zf:
                     if any(n.startswith("word/") for n in zf.namelist()):
@@ -157,13 +150,14 @@ def _metadata_from_model(doc) -> dict[str, Any]:
 
 
 def read_metadata(doc_id: str, db: Session | None = None) -> dict[str, Any]:
-    # Always read from JSON file to ensure test for corrupt metadata passes
     upload_dir = Path(settings.upload_dir)
     meta_path = upload_dir / f"{doc_id}.json"
     if not meta_path.exists():
         raise HTTPException(status_code=404, detail="Document not found")
     try:
-        return json.loads(meta_path.read_text())
+        data = json.loads(meta_path.read_text())
+        logger.debug("metadata.read id=%s", doc_id)
+        return data
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to read metadata")
 
@@ -173,24 +167,25 @@ def get_file_path_from_meta(doc_id: str, db: Session | None = None) -> Path:
     path = Path(meta.get("path"))
     if not path.exists():
         raise HTTPException(status_code=404, detail="File not found")
+    logger.debug("file.path id=%s path=%s", doc_id, str(path))
     return path
 
 
 def extract_text_from_document(
     doc_id: str, db: Session | None = None
 ) -> dict[str, Any]:
-    """Extract raw text from document using appropriate extractor.
-
-    Returns dict with 'text' and 'extraction_meta' keys.
-    Raises HTTPException on extraction errors.
-    """
+    """Extract raw text using appropriate extractor."""
     meta = read_metadata(doc_id, db=db)
     file_path = get_file_path_from_meta(doc_id, db=db)
     content_type = meta.get("content_type")
 
     try:
+        logger.info("extract.text.start id=%s type=%s", doc_id, content_type)
         extractor = get_extractor(content_type)
         result = extractor.extract(str(file_path))
+        logger.info(
+            "extract.text.success id=%s chars=%s", doc_id, len(result.text or "")
+        )
         return {
             "text": result.text,
             "extraction_meta": result.meta,
@@ -218,16 +213,14 @@ def extract_structured_record_from_text(
     db: Session | None = None,
     doc_id: str | None = None,
 ) -> dict[str, Any]:
-    """Extract and structure veterinary record from raw text using LLM.
-
-    Returns dict with 'record' key containing VeterinaryRecordSchema data.
-    Raises HTTPException on LLM errors.
-    """
+    """Extract and structure record from raw text using LLM."""
     try:
+        logger.info("extract.record.start doc_id=%s", doc_id)
         record = extract_structured_record(raw_text)
         result = {"record": _to_jsonable(record.model_dump())}
         if db is not None and doc_id:
             upsert_structured_record(db, doc_id, result["record"])
+        logger.info("extract.record.success doc_id=%s", doc_id)
         return result
     except LLMExtractionError as e:
         raise HTTPException(
@@ -241,10 +234,7 @@ def extract_structured_record_from_text(
 def process_document_full_pipeline(
     doc_id: str, db: Session | None = None
 ) -> dict[str, Any]:
-    """Full pipeline: extract text → structure with LLM.
-
-    Returns dict with both raw text and structured record.
-    """
+    """Run full pipeline: extract text then structure with LLM."""
     extraction_result = extract_text_from_document(doc_id, db=db)
     raw_text = extraction_result["text"]
 
@@ -259,10 +249,8 @@ def process_document_full_pipeline(
             raw_text, db=db, doc_id=doc_id
         )
     except HTTPException as e:
-        # Preserve upstream HTTP errors (e.g., 422 from LLM failures)
         raise e
     except LLMExtractionError as e:
-        # Handle direct LLM errors if raised by mocks or underlying calls
         raise HTTPException(
             status_code=422,
             detail=f"LLM extraction failed: {str(e)}",
@@ -279,10 +267,9 @@ def process_document_full_pipeline(
 
 
 def persist_document_metadata(db: Session, metadata: dict[str, Any]) -> None:
-    """Persist uploaded document metadata into the database."""
+    """Persist uploaded document metadata."""
     existing = db.get(Document, metadata["id"])
     if existing:
-        # Update mutable fields if any
         existing.original_filename = metadata.get(
             "original_filename", existing.original_filename
         )
@@ -303,12 +290,13 @@ def persist_document_metadata(db: Session, metadata: dict[str, Any]) -> None:
         )
         db.add(doc)
     db.commit()
+    logger.debug("metadata.persisted id=%s", metadata["id"])
 
 
 def upsert_structured_record(
     db: Session, doc_id: str, record: dict[str, Any]
 ) -> dict[str, Any]:
-    """Create or update the structured record for a document."""
+    """Create or update structured record for a document."""
     doc = db.get(Document, doc_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -320,4 +308,5 @@ def upsert_structured_record(
         doc.record = StructuredRecord(document_id=doc_id, record_json=payload)
     db.commit()
     db.refresh(doc)
+    logger.debug("record.upserted doc_id=%s", doc_id)
     return doc.record.record_json

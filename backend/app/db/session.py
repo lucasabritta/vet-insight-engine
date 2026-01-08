@@ -1,5 +1,4 @@
-"""Database session management and dependency injection."""
-
+import logging
 from collections.abc import Iterator
 
 from sqlalchemy import create_engine
@@ -20,8 +19,10 @@ SessionLocal = sessionmaker(
 
 
 def get_db() -> Iterator[Session]:
+    logging.getLogger("app.db").debug("session.open")
     db = SessionLocal()
     try:
         yield db
     finally:
+        logging.getLogger("app.db").debug("session.close")
         db.close()

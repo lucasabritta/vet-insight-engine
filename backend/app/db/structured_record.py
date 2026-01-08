@@ -1,5 +1,3 @@
-"""StructuredRecord SQLAlchemy model."""
-
 from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB

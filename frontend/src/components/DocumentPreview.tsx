@@ -32,6 +32,7 @@ export const DocumentPreview = ({ fileUrl, contentType }: DocumentPreviewProps) 
       setDocxError(null)
       const host = container?.querySelector('[data-docx-host]') as HTMLDivElement | null
       host?.replaceChildren()
+      if (type) console.debug('preview.type', { type })
       return
     }
 
@@ -47,6 +48,7 @@ export const DocumentPreview = ({ fileUrl, contentType }: DocumentPreviewProps) 
 
     const renderDocx = async () => {
       try {
+        console.info('preview.docx.fetch', { url: fileUrl })
         const response = await fetch(fileUrl)
         if (!response.ok) throw new Error(`Fetch failed: ${response.status}`)
         const buffer = await response.arrayBuffer()
@@ -64,10 +66,13 @@ export const DocumentPreview = ({ fileUrl, contentType }: DocumentPreviewProps) 
         host.replaceChildren()
         await renderAsync(buffer, host)
         if (!cancelled) setDocxStatus('ready')
+        console.info('preview.docx.rendered')
       } catch (error) {
         if (cancelled) return
+        const errorMsg = error instanceof Error ? error.message : 'Failed to render DOCX'
         setDocxStatus('error')
-        setDocxError(error instanceof Error ? error.message : 'Failed to render DOCX')
+        setDocxError(errorMsg)
+        console.error('preview.docx.error', { message: errorMsg })
       }
     }
 

@@ -11,6 +11,7 @@ export const UploadDropzone = ({ onFilesSelected, accept, multiple = false }: Up
   const handleDrop = useCallback(
     (accepted: File[]) => {
       if (!accepted || accepted.length === 0) return
+      console.info('upload.drop', { count: accepted.length, names: accepted.map((f) => f.name) })
       onFilesSelected(multiple ? accepted : [accepted[0]])
     },
     [onFilesSelected, multiple]
