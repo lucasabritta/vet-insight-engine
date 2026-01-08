@@ -1,6 +1,7 @@
 [![E2E LLM Extraction](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/e2e-llm-extraction.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/e2e-llm-extraction.yml)
 [![Lint](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/lint.yml)
 [![Tests](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/test.yml)
+[![Integration Test](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/integration.yml/badge.svg?branch=master)](https://github.com/lucasabritta/vet-insight-engine/actions/workflows/integration.yml)
 
 # Vet Insight Engine
 
