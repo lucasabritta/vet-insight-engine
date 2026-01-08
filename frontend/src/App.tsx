@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import UploadDropzone from './components/UploadDropzone'
 import DocumentPreview from './components/DocumentPreview'
 import { StructuredDataEditor } from './components/StructuredDataEditor'
-import { extractDocument, getDocumentFileUrl, uploadDocument, getApiBaseUrl, getDocument } from './lib/api'
+import { extractDocument, getDocumentFileUrl, uploadDocument, getApiBaseUrl } from './lib/api'
 
 const UPLOAD_PROGRESS_START = 10
 const UPLOAD_PROGRESS_FETCH = 60

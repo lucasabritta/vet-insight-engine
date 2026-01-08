@@ -68,7 +68,7 @@ describe('useFormData', () => {
       })
     })
 
-    expect(result.current.formData.diagnoses[0].severity).toBe('Severe')
+    expect((result.current.formData.diagnoses as Array<Record<string, unknown>>)[0].severity).toBe('Severe')
   })
 
   it('adds new items to nested array', () => {
@@ -82,7 +82,7 @@ describe('useFormData', () => {
     })
 
     expect(result.current.formData.diagnoses).toHaveLength(2)
-    expect(result.current.formData.diagnoses[1].condition).toBe('Diabetes')
+    expect((result.current.formData.diagnoses as Array<Record<string, unknown>>)[1].condition).toBe('Diabetes')
   })
 
   it('removes items from nested array', () => {
@@ -200,6 +200,6 @@ describe('useFormData', () => {
       })
     })
 
-    expect(result.current.formData.diagnoses[0].notes).toBe('Updated notes with more details')
+    expect((result.current.formData.diagnoses as Array<Record<string, unknown>>)[0].notes).toBe('Updated notes with more details')
   })
 })

@@ -143,7 +143,10 @@ describe('ConfirmationDialog', () => {
 
     const dialog = screen.getByRole('alertdialog')
     // Fire a keyboard event directly on the dialog container
-    fireEvent.keyDown(dialog.parentElement!, { key: 'Escape' })
+    const parentElement = dialog.parentElement
+    if (parentElement) {
+      fireEvent.keyDown(parentElement, { key: 'Escape' })
+    }
 
     expect(onCancel).toHaveBeenCalled()
   })
