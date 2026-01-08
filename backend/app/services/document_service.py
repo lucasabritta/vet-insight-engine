@@ -183,7 +183,9 @@ def extract_text_from_document(
         logger.info("extract.text.start id=%s type=%s", doc_id, content_type)
         extractor = get_extractor(content_type)
         result = extractor.extract(str(file_path))
-        logger.info("extract.text.success id=%s chars=%s", doc_id, len(result.text or ""))
+        logger.info(
+            "extract.text.success id=%s chars=%s", doc_id, len(result.text or "")
+        )
         return {
             "text": result.text,
             "extraction_meta": result.meta,
