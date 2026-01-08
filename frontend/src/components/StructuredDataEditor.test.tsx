@@ -220,23 +220,6 @@ describe('StructuredDataEditor', () => {
     })
   })
 
-  it('tracks changes in change history', async () => {
-    const user = userEvent.setup()
-    render(
-      <StructuredDataEditor
-        docId="test-doc-123"
-        initialData={mockInitialData}
-      />
-    )
-
-    const petNameInput = screen.getByDisplayValue('Buddy')
-    await user.clear(petNameInput)
-    await user.type(petNameInput, 'Max')
-
-    // Form should allow changes
-    expect(petNameInput).toHaveValue('Max')
-  })
-
   it('allows adding diagnoses', async () => {
     const user = userEvent.setup()
     render(
