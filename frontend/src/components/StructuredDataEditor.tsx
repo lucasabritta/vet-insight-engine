@@ -23,7 +23,7 @@ export function StructuredDataEditor({
   // State management
   const [errors] = useState<Record<string, string>>({})
 
-  const { formData, isDirty, getFormValue, updateField, updateNestedArray, clearHistory } =
+  const { formData, isDirty, getFormValue, updateField, updateNestedArray, resetDirty } =
     useFormData(initialData)
   const saveState = useSaveState()
   // Array operations
@@ -84,14 +84,15 @@ export function StructuredDataEditor({
     try {
       await updateDocument(docId, formData)
       saveState.completeSave()
+      saveState.resetConfirmation()
       onSaveSuccess?.()
-      clearHistory()
+      resetDirty()
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to save record'
       saveState.failSave(errorMsg)
       onSaveError?.(errorMsg)
     }
-  }, [docId, formData, saveState, onSaveSuccess, onSaveError, clearHistory])
+  }, [docId, formData, saveState, onSaveSuccess, onSaveError, resetDirty])
 
   const handleSubmitClick = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

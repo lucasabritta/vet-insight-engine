@@ -21,13 +21,15 @@ interface UseFormDataReturn {
     updater: (current: Array<Record<string, unknown>>) => Array<Record<string, unknown>>
   ) => void
   clearHistory: () => void
+  resetDirty: () => void
 }
 
 export function useFormData(initialData: Record<string, unknown>): UseFormDataReturn {
   const [formData, setFormData] = useState<Record<string, unknown>>(initialData)
+  const [baselineData, setBaselineData] = useState<Record<string, unknown>>(initialData)
   const [changeHistory, setChangeHistory] = useState<ChangeTrack[]>([])
 
-  const isDirty = JSON.stringify(formData) !== JSON.stringify(initialData)
+  const isDirty = JSON.stringify(formData) !== JSON.stringify(baselineData)
 
   const trackChange = useCallback((field: string, oldValue: unknown, newValue: unknown) => {
     if (oldValue === newValue) return
@@ -70,6 +72,10 @@ export function useFormData(initialData: Record<string, unknown>): UseFormDataRe
   const clearHistory = useCallback(() => {
     setChangeHistory([])
   }, [])
+const resetDirty = useCallback(() => {
+    setBaselineData(formData)
+    setChangeHistory([])
+  }, [formData])
 
   return {
     formData,
@@ -79,5 +85,6 @@ export function useFormData(initialData: Record<string, unknown>): UseFormDataRe
     updateField,
     updateNestedArray,
     clearHistory,
+    resetDirty,
   }
 }

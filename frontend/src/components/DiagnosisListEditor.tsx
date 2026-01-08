@@ -30,9 +30,9 @@ export const DiagnosisListEditor = React.memo(function DiagnosisListEditor({
             />
             <FormField
               label="Date of Diagnosis"
-              type="date"
               value={String(diagnosis.date || '')}
               onChange={(v) => onChange(idx, 'date', v)}
+              placeholder="e.g., 28/07/20"
               error={errors[`diagnoses.${idx}.date`]}
             />
             <FormField
