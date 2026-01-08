@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import UploadDropzone from './components/UploadDropzone'
 import DocumentPreview from './components/DocumentPreview'
+import { StructuredDataEditor } from './components/StructuredDataEditor'
 import { extractDocument, getDocumentFileUrl, uploadDocument, getApiBaseUrl } from './lib/api'
 
 const UPLOAD_PROGRESS_START = 10
@@ -16,6 +17,7 @@ function App() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [rawText, setRawText] = useState<string>('')
   const [isExtracting, setIsExtracting] = useState<boolean>(false)
+  const [extractedData, setExtractedData] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -34,6 +36,7 @@ function App() {
 
   const handleFilesSelected = async (files: File[]) => {
     setUploadError(null)
+    setExtractedData(null)
     const file = files[0]
     setSelectedFile(file)
     setUploadProgress(UPLOAD_PROGRESS_START)
@@ -46,6 +49,7 @@ function App() {
       const extracted = await extractDocument(result.id)
       setUploadProgress(UPLOAD_PROGRESS_COMPLETE)
       setRawText(extracted.raw_text || '')
+      setExtractedData(extracted.record || {})
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Upload failed'
       setUploadError(message)
@@ -118,6 +122,21 @@ function App() {
             )}
           </div>
         </section>
+
+        {extractedData && docId && (
+          <section className="mt-8">
+            <StructuredDataEditor
+              docId={docId}
+              initialData={extractedData}
+              onSaveSuccess={() => {
+                setUploadError(null)
+              }}
+              onSaveError={(error) => {
+                setUploadError(error)
+              }}
+            />
+          </section>
+        )}
       </div>
     </div>
   )

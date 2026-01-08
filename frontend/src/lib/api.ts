@@ -6,6 +6,13 @@ export type ExtractResponse = {
   record: Record<string, unknown>;
 };
 
+export type VeterinaryRecord = Record<string, unknown>;
+
+export type UpdateDocumentResponse = {
+  id: string;
+  record: VeterinaryRecord;
+};
+
 export const getApiBaseUrl = (): string =>
   import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -48,6 +55,13 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
 export async function extractDocument(docId: string): Promise<ExtractResponse> {
   return apiClient<ExtractResponse>(`/documents/${docId}/extract`, {
     method: 'POST',
+  });
+}
+
+export async function updateDocument(docId: string, record: VeterinaryRecord): Promise<UpdateDocumentResponse> {
+  return apiClient<UpdateDocumentResponse>(`/documents/${docId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ record }),
   });
 }
 
