@@ -69,9 +69,10 @@ export const DocumentPreview = ({ fileUrl, contentType }: DocumentPreviewProps) 
         console.info('preview.docx.rendered')
       } catch (error) {
         if (cancelled) return
+        const errorMsg = error instanceof Error ? error.message : 'Failed to render DOCX'
         setDocxStatus('error')
-        setDocxError(error instanceof Error ? error.message : 'Failed to render DOCX')
-        console.error('preview.docx.error', { message: docxError || (error as Error)?.message })
+        setDocxError(errorMsg)
+        console.error('preview.docx.error', { message: errorMsg })
       }
     }
 
