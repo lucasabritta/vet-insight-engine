@@ -128,7 +128,7 @@ def _infer_content_type(
             return "application/pdf"
         if head.startswith(b"\x89PNG\r\n\x1a\n"):
             return "image/png"
-        if head.startswith(b"\xFF\xD8\xFF"):
+        if head.startswith(b"\xff\xd8\xff"):
             return "image/jpeg"
         if head.startswith(b"PK\x03\x04"):
             # Likely a ZIP container (DOCX among others). Try check for DOCX structure.

@@ -84,6 +84,7 @@ def test_download_missing_file(client, tmp_path):
     # Read metadata to find the actual file path
     meta_path = Path(settings.upload_dir) / f"{doc_id}.json"
     import json
+
     meta = json.loads(meta_path.read_text())
     file_path = Path(meta["path"])
 
