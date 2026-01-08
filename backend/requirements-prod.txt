@@ -1,11 +1,9 @@
-# For in-memory Postgres in tests
-py-pglite
-psycopg[binary]
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
 pydantic-settings==2.1.0
 sqlalchemy==2.0.23
+psycopg[binary]
 psycopg2-binary==2.9.9
 pymupdf==1.23.8
 python-docx==0.8.11
@@ -17,9 +15,4 @@ httpx==0.24.1
 pytesseract==0.3.13
 Pillow==12.1.0
 reportlab==4.4.7
-pytest==7.4.4
-pytest-cov==4.0.0
-pytest-asyncio==0.21.0
-pytest-mock==3.11.1
-ruff==0.4.6
 alembic==1.13.1
