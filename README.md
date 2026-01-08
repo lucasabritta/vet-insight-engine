@@ -102,7 +102,7 @@ docker run --rm -v ${PWD}:/app -w /app -e DATABASE_URL=postgresql://user:passwor
 **Frontend (vitest in container):**
 
 ```powershell
-docker run --rm -v ${PWD}/frontend:/app -w /app node:20-slim sh -c "npm install --legacy-peer-deps && npm run test -- --run"
+docker run --rm -v ${PWD}/frontend:/app -w /app node:20-slim sh -c "npm install && npm run test -- --run"
 ```
 
 ## Future Improvements
