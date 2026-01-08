@@ -34,11 +34,11 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest backend/tests/unit --cov=backend/app --cov-report=term-missing
+          pytest backend/tests/unit --cov=backend/app --cov-report=term-missing --cov-report=html --cov-report=json --cov-fail-under=80
 
       - name: Run integration tests
         run: |
-          pytest backend/tests/integration --cov=backend/app --cov-report=term-missing --cov-append
+          pytest backend/tests/integration --cov=backend/app --cov-report=term-missing --cov-report=html --cov-report=json --cov-append --cov-fail-under=80
 
   test-frontend:
     name: Tests Frontend
